@@ -23,9 +23,7 @@ In order to run the application, you must first install the following pre-requis
    docker-compose up -d 
    ```
 
-3. **Open the application**: once that the containers are created you can start using the application. You can simply open your browser to the following URL:
-
-  http://localhost:3000
+3. **Open the application**: once that the containers are created you can start using the application. You can simply open your browser to the following URL: http://localhost:3000
 
 4. **Stop the application**: if you want to stop using the application, you can stop the docker containers with the following command:
 
