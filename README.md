@@ -7,7 +7,7 @@
 
 In order to run the application, you must first install the following pre-requisites:
 
-- **Docker**: fundamental for creating the containers of the services offered by the application. It's suggested to download **docker desktop** from the offical website:
+- **Docker**: fundamental for creating the containers of the services offered by the application. It's recommended to download **Docker Desktop** from the official website:
   - **Windows**: [Docker Desktop](https://www.docker.com/products/docker-desktop)
 
 ## Application Launch
@@ -17,17 +17,17 @@ In order to run the application, you must first install the following pre-requis
    git clone https://github.com/AngeloTrifelli/PlayVerse.git
    ```
    
-2. **Create the containers**: before executing this step ensure that the **docker** service is running on your machine. Open a terminal inside the folder containing the cloned repository and run the following command in order to create all the docker containers:
+2. **Create the containers**: before performing this step make sure that the **docker** service is running on your machine. Open a terminal in the folder containing the cloned repository and run the following command in order to create all the docker containers:
 
   ```bash
    docker-compose up -d 
    ```
 
-3. **Open the application**: once that the containers have finished their creation you can start using the application by simply opening your browser on the following URL:
+3. **Open the application**: once that the containers are created you can start using the application. You can simply open your browser to the following URL:
 
   http://localhost:3000
 
-4. **Stop the application**: when you want to stop using the application, you can stop the docker containers with the following command:
+4. **Stop the application**: if you want to stop using the application, you can stop the docker containers with the following command:
 
    ```bash
     docker-compose down
