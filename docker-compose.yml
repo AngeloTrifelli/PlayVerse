@@ -1,0 +1,71 @@
+services:
+  database:
+    build:
+      context: "./Database"
+      dockerfile: "DockerFile.MySql"
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    container_name: mysql
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - my-network
+    ports:
+      - "3306:3306"
+    expose:
+      - "3306"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  backend:
+    build:
+      context: "./Backend"
+      dockerfile: "DockerFile.Backend"
+    container_name: backend
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD} 
+    ports:
+      - "5000:5000"
+    depends_on:
+      database: 
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - my-network
+    volumes:
+      - ./Backend:/app
+  frontend:
+    build:
+      context: "./Frontend"
+      dockerfile: "DockerFile.Frontend"
+    container_name: frontend
+    environment:
+      - WDS_SOCKET_HOST=127.0.0.1 
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true 
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - my-network
+    volumes:
+      - ./Frontend:/app
+      - /app/node_modules
+    
+    
+
+volumes:
+  db-data:
+
+networks:
+  my-network:
