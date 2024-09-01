@@ -19,7 +19,7 @@ In order to run the application, you must first install the following pre-requis
    
 2. **Create the containers**: before performing this step make sure that the **docker** service is running on your machine. Open a terminal in the folder containing the cloned repository and run the following command in order to create all the docker containers:
 
-  ```bash
+   ```bash
    docker-compose up -d 
    ```
 
