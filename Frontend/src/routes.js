@@ -18,7 +18,7 @@
 */
 
 import Dashboard from "layouts/dashboard";
-import RTL from "layouts/rtl";
+import FAQ from "layouts/faq";
 import SignIn from "layouts/authentication/sign-in";
 import SignUp from "layouts/authentication/sign-up";
 
@@ -36,11 +36,11 @@ const routes = [
   },
   {
     type: "collapse",
-    name: "RTL",
+    name: "FAQ",
     key: "rtl",
-    icon: <Icon fontSize="small">format_textdirection_r_to_l</Icon>,
-    route: "/rtl",
-    component: <RTL />,
+    icon: <Icon fontSize="small">live_help</Icon>,
+    route: "/faq",
+    component: <FAQ />,
   },
   {
     type: "collapse",
