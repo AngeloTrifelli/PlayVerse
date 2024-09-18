@@ -84,7 +84,7 @@ function Basic() {
         <MDBox pt={4} pb={3} px={3}>
           <MDBox component="form" role="form">
             <MDBox mb={2}>
-              <MDInput type="email" label="Email" fullWidth />
+              <MDInput type="username" label="Username" fullWidth />
             </MDBox>
             <MDBox mb={2}>
               <MDInput type="password" label="Password" fullWidth />

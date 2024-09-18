@@ -18,7 +18,6 @@ import { useState, useEffect, useMemo } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { usePlayVerseUIController, setMiniSidenav } from "context";
 
-
 export default function App() {
   const [controller, dispatch] = usePlayVerseUIController();
   const {
