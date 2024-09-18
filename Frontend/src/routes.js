@@ -21,7 +21,7 @@ import Dashboard from "layouts/dashboard";
 import FAQ from "layouts/faq";
 import SignIn from "layouts/authentication/sign-in";
 import SignUp from "layouts/authentication/sign-up";
-
+import Shop from "layouts/shop";
 // @mui icons
 import Icon from "@mui/material/Icon";
 
@@ -41,6 +41,14 @@ const routes = [
     icon: <Icon fontSize="small">live_help</Icon>,
     route: "/faq",
     component: <FAQ />,
+  },
+  {
+    type: "collapse",
+    name: "Shop",
+    key: "shop",
+    icon: <Icon fontSize="small">shopping_bag</Icon>,
+    route: "/shop",
+    component: <Shop />,
   },
   {
     type: "collapse",
