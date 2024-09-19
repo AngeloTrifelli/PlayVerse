@@ -15,7 +15,6 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { usePlayVerseUIController } from "context";
 
-
 function DefaultNavbar({ transparent, light, action }) {
   const [controller] = usePlayVerseUIController();
   const { darkMode } = controller;
@@ -23,7 +22,8 @@ function DefaultNavbar({ transparent, light, action }) {
   const [mobileNavbar, setMobileNavbar] = useState(false);
   const [mobileView, setMobileView] = useState(false);
 
-  const openMobileNavbar = ({ currentTarget }) => setMobileNavbar(currentTarget.parentNode);
+  const openMobileNavbar = ({ currentTarget }) =>
+    setMobileNavbar(currentTarget.parentNode);
   const closeMobileNavbar = () => setMobileNavbar(false);
 
   useEffect(() => {
@@ -63,19 +63,19 @@ function DefaultNavbar({ transparent, light, action }) {
         shadow={transparent ? "none" : "md"}
         color={light ? "white" : "dark"}
         display="flex"
-        justifyContent="space-between"
+        justifyContent="center"
         alignItems="center"
         position="absolute"
         left={0}
         zIndex={3}
         sx={({
           palette: { transparent: transparentColor, white, background },
-          functions: { rgba },
+          functions: { rgba }
         }) => ({
           backgroundColor: transparent
             ? transparentColor.main
             : rgba(darkMode ? background.sidenav : white.main, 0.8),
-          backdropFilter: transparent ? "none" : `saturate(200%) blur(30px)`,
+          backdropFilter: transparent ? "none" : `saturate(200%) blur(30px)`
         })}
       >
         <MDBox
@@ -84,11 +84,20 @@ function DefaultNavbar({ transparent, light, action }) {
           py={transparent ? 1.5 : 0.75}
           lineHeight={1}
           pl={{ xs: 0, lg: 1 }}
-        >
-        </MDBox>
-        <MDBox color="inherit" display={{ xs: "none", lg: "flex" }} m={0} p={0} >
-          <DefaultNavbarLink icon="home" name="home" route="/dashboard" light={light} />
-          <DefaultNavbarLink icon="person" name="profile" route="/profile" light={light} />
+        ></MDBox>
+        <MDBox color="inherit" display={{ xs: "none", lg: "flex" }} m={0} p={0}>
+          <DefaultNavbarLink
+            icon="home"
+            name="home"
+            route="/dashboard"
+            light={light}
+          />
+          <DefaultNavbarLink
+            icon="person"
+            name="profile"
+            route="/profile"
+            light={light}
+          />
           <DefaultNavbarLink
             icon="account_circle"
             name="sign up"
@@ -143,7 +152,9 @@ function DefaultNavbar({ transparent, light, action }) {
           <Icon fontSize="default">{mobileNavbar ? "close" : "menu"}</Icon>
         </MDBox>
       </MDBox>
-      {mobileView && <DefaultNavbarMobile open={mobileNavbar} close={closeMobileNavbar} />}
+      {mobileView && (
+        <DefaultNavbarMobile open={mobileNavbar} close={closeMobileNavbar} />
+      )}
     </Container>
   );
 }
@@ -152,7 +163,7 @@ function DefaultNavbar({ transparent, light, action }) {
 DefaultNavbar.defaultProps = {
   transparent: false,
   light: false,
-  action: false,
+  action: false
 };
 
 // Typechecking props for the DefaultNavbar
@@ -172,11 +183,11 @@ DefaultNavbar.propTypes = {
         "warning",
         "error",
         "dark",
-        "light",
+        "light"
       ]),
-      label: PropTypes.string.isRequired,
-    }),
-  ]),
+      label: PropTypes.string.isRequired
+    })
+  ])
 };
 
 export default DefaultNavbar;

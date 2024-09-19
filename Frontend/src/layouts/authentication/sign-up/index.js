@@ -30,7 +30,7 @@ import MDButton from "components/MDButton";
 import CoverLayout from "layouts/authentication/components/CoverLayout";
 
 // Images
-import bgImage from "assets/images/bg-sign-up-cover.jpeg";
+import bgImage from "assets/images/sfondo-sign-up.jpeg";
 
 function Cover() {
   return (
@@ -60,19 +60,39 @@ function Cover() {
               <MDInput type="text" label="Name" variant="standard" fullWidth />
             </MDBox>
             <MDBox mb={2}>
-              <MDInput type="text" label="Surname" variant="standard" fullWidth />
+              <MDInput
+                type="text"
+                label="Surname"
+                variant="standard"
+                fullWidth
+              />
             </MDBox>
             <MDBox mb={2}>
               <MDInput type="date" label="" variant="standard" fullWidth />
             </MDBox>
             <MDBox mb={2}>
-              <MDInput type="text" label="Username" variant="standard" fullWidth />
+              <MDInput
+                type="text"
+                label="Username"
+                variant="standard"
+                fullWidth
+              />
             </MDBox>
             <MDBox mb={2}>
-              <MDInput type="email" label="Email" variant="standard" fullWidth />
+              <MDInput
+                type="email"
+                label="Email"
+                variant="standard"
+                fullWidth
+              />
             </MDBox>
             <MDBox mb={2}>
-              <MDInput type="password" label="Password" variant="standard" fullWidth />
+              <MDInput
+                type="password"
+                label="Password"
+                variant="standard"
+                fullWidth
+              />
             </MDBox>
             <MDBox display="flex" alignItems="center" ml={-1}>
               <Checkbox />
