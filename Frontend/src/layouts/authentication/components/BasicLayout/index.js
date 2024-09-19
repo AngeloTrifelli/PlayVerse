@@ -28,18 +28,12 @@ import PageLayout from "examples/LayoutContainers/PageLayout";
 
 // Authentication pages components
 import Footer from "layouts/authentication/components/Footer";
+import colors from "assets/theme/base/colors";
 
 function BasicLayout({ image, children }) {
   return (
     <PageLayout>
-      <DefaultNavbar
-        action={{
-          type: "external",
-          route: "https://creative-tim.com/product/material-dashboard-react",
-          label: "free download",
-          color: "dark",
-        }}
-      />
+      <DefaultNavbar/>
       <MDBox
         position="absolute"
         width="100%"
