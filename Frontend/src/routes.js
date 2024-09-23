@@ -22,6 +22,7 @@ import FAQ from "layouts/faq";
 import SignIn from "layouts/authentication/sign-in";
 import SignUp from "layouts/authentication/sign-up";
 import Shop from "layouts/shop";
+import Profile from "layouts/profile";
 // @mui icons
 import Icon from "@mui/material/Icon";
 
@@ -32,7 +33,7 @@ const routes = [
     key: "dashboard",
     icon: <Icon fontSize="small">dashboard</Icon>,
     route: "/dashboard",
-    component: <Dashboard />,
+    component: <Dashboard />
   },
   {
     type: "collapse",
@@ -40,7 +41,7 @@ const routes = [
     key: "rtl",
     icon: <Icon fontSize="small">live_help</Icon>,
     route: "/faq",
-    component: <FAQ />,
+    component: <FAQ />
   },
   {
     type: "collapse",
@@ -48,7 +49,15 @@ const routes = [
     key: "shop",
     icon: <Icon fontSize="small">shopping_bag</Icon>,
     route: "/shop",
-    component: <Shop />,
+    component: <Shop />
+  },
+  {
+    type: "collapse",
+    name: "Profile",
+    key: "profile",
+    icon: <Icon fontSize="small">person</Icon>,
+    route: "/profile",
+    component: <Profile />
   },
   {
     type: "collapse",
@@ -56,7 +65,7 @@ const routes = [
     key: "sign-in",
     icon: <Icon fontSize="small">login</Icon>,
     route: "/authentication/sign-in",
-    component: <SignIn />,
+    component: <SignIn />
   },
   {
     type: "collapse",
@@ -64,8 +73,8 @@ const routes = [
     key: "sign-up",
     icon: <Icon fontSize="small">assignment</Icon>,
     route: "/authentication/sign-up",
-    component: <SignUp />,
-  },
+    component: <SignUp />
+  }
 ];
 
 export default routes;
