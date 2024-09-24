@@ -23,7 +23,7 @@ import SignIn from "layouts/authentication/sign-in";
 import SignUp from "layouts/authentication/sign-up";
 import Shop from "layouts/shop";
 import Profile from "layouts/profile";
-// @mui icons
+import Games from "layouts/games"; 
 import Icon from "@mui/material/Icon";
 
 const routes = [
@@ -34,6 +34,14 @@ const routes = [
     icon: <Icon fontSize="small">dashboard</Icon>,
     route: "/dashboard",
     component: <Dashboard />
+  },
+  {
+    type: "collapse",
+    name: "Games",
+    key: "games",
+    icon: <Icon fontSize="small">videogame_asset</Icon>,
+    route: "/games",
+    component: <Games />
   },
   {
     type: "collapse",
