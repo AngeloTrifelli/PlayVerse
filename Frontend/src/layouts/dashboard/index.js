@@ -1,12 +1,7 @@
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
-import Footer from "examples/Footer";
 
 function Dashboard() {
-  return (
-    <DashboardLayout>
-      <Footer />
-    </DashboardLayout>
-  );
+  return <DashboardLayout></DashboardLayout>;
 }
 
 export default Dashboard;
