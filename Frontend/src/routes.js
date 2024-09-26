@@ -25,7 +25,7 @@ import Shop from "layouts/shop";
 import Profile from "layouts/profile";
 import Notifications from "layouts/notifications";
 import Games from "layouts/games";
-// @mui icons
+import UserList from "layouts/user_list"; 
 import Icon from "@mui/material/Icon";
 
 const routes = [
@@ -92,6 +92,14 @@ const routes = [
     icon: <Icon fontSize="small">assignment</Icon>,
     route: "/authentication/sign-up",
     component: <SignUp />
+  },
+  {
+    type: "collapse",
+    name: "User List (mod)",
+    key: "user-list",
+    icon: <Icon fontSize="small">person</Icon>,
+    route: "/user_list",
+    component: <UserList />
   }
 ];
 
