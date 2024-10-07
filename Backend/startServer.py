@@ -1,9 +1,12 @@
 import logging
 from Rest import UserPublisher
 from flask import Flask
+from flask_cors import CORS
 
 
 app = Flask(__name__)
+CORS(app)
+
 
 #Register publisher endpoints
 app.register_blueprint(UserPublisher.bp)
