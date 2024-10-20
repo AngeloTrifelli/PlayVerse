@@ -78,14 +78,14 @@ function Cover() {
     let endpoint = `${process.env.REACT_APP_API_BASE_URL}/User/register`;
 
     try {
-      const response = await axios.post(endpoint, dataList, {headers: {'Content-Type': 'application/json'}});
+      const response = await axios.post(endpoint, dataList);
 
       if (response.status === 201) {
         openModal("Registration successful");
       }
     } catch (error) {
       if (error.response) {
-        let errorMessage = error.response.data.message;
+        let errorMessage = error.response.data.error;
 
         if (errorMessage === undefined && typeof error.response.data === 'string') {
           let parser = new DOMParser();

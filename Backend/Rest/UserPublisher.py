@@ -1,5 +1,7 @@
 import logging
 import time
+from datetime import datetime
+
 from flask import Blueprint, jsonify, request
 from flask_cors import cross_origin
 from mysql.connector import Error
@@ -47,33 +49,32 @@ def find_user():
         if conn:
             conn.close()
 
-@bp.route('/User/register', methods=['OPTIONS', 'POST'])
-@cross_origin(origin='http://localhost:3000')
+@bp.route('/User/register', methods=['POST'])
 def register():
     print("Received a new request for User/register endpoint")
-
-    if request.method == 'OPTIONS':
-        return '', 200
     
     conn = DatabaseConnection.get_db_connection()
     cursor = conn.cursor(dictionary=True)
     payload = request.get_json()
-
+    
     try:
         cursor = conn.cursor(dictionary=True)
         query = "SELECT * FROM User WHERE username = %s"
-        cursor.execute(query, (payload["username"]))
+        cursor.execute(query, (payload["username"], ))
         existing_user = cursor.fetchone()
+
 
         if (existing_user):
             return create_error_response('Username already taken!', 400)
-        
+    
         encoded_password = sha256(str(payload['password']).encode('utf-8')).hexdigest()
+        created_at = datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
 
         insert_query = "INSERT INTO User (username, password, role, name, surname, dateOfBirth, points, credits, created_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        params = (payload["username"], encoded_password, "PLAYER", payload["name"], payload["surname"], payload["dateOfBirth"], 0, 0, time.time())
+        params = (payload["username"], encoded_password, "PLAYER", payload["name"], payload["surname"], payload["dateOfBirth"], 0, 0, created_at)
 
         cursor.execute(insert_query, params)
+        conn.commit()
 
         return jsonify({'success': True}), 201
     except Error as e:
