@@ -4,7 +4,7 @@ from datetime import datetime
 import os
 
 from flask import Blueprint, jsonify, request
-from flask_cors import cross_origin
+from flask_jwt_extended import create_access_token
 from mysql.connector import Error
 from hashlib import sha256
 from Config import DatabaseConnection
