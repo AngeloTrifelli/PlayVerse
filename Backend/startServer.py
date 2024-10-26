@@ -1,16 +1,26 @@
 import logging
 from Rest import UserPublisher
+from Rest import AuthPublisher
+
 from flask import Flask, request
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager
+from datetime import timedelta
+from Utils.AuthValidator import SECRET_KEY
 
 
 app = Flask(__name__)
-
+app.config['JWT_SECRET_KEY'] = SECRET_KEY
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)         #The authentication token will expire after 1 hour
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+
 
 #Register publisher endpoints
 app.register_blueprint(UserPublisher.bp)
+app.register_blueprint(AuthPublisher.bp)
 
+#Enable JWT Authentication 
+JWTManager(app)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

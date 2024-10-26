@@ -37,7 +37,8 @@ const routes = [
     key: "dashboard",
     icon: <Icon fontSize="small">dashboard</Icon>,
     route: "/dashboard",
-    component: <Dashboard />
+    component: <Dashboard />,
+    authRequired: false
   },
   {
     type: "collapse",
@@ -45,7 +46,8 @@ const routes = [
     key: "games",
     icon: <Icon fontSize="small">videogame_asset</Icon>,
     route: "/games",
-    component: <Games />
+    component: <Games />,
+    authRequired: true
   },
   {
     type: "collapse",
@@ -53,7 +55,8 @@ const routes = [
     key: "rtl",
     icon: <Icon fontSize="small">live_help</Icon>,
     route: "/faq",
-    component: <FAQ />
+    component: <FAQ />,
+    authRequired: false
   },
   {
     type: "collapse",
@@ -61,7 +64,8 @@ const routes = [
     key: "shop",
     icon: <Icon fontSize="small">shopping_bag</Icon>,
     route: "/shop",
-    component: <Shop />
+    component: <Shop />,
+    authRequired: false
   },
   {
     type: "collapse",
@@ -69,7 +73,8 @@ const routes = [
     key: "profile",
     icon: <Icon fontSize="small">person</Icon>,
     route: "/profile",
-    component: <Profile />
+    component: <Profile />,
+    authRequired: true
   },
   {
     type: "collapse",
@@ -77,7 +82,8 @@ const routes = [
     key: "UserRanking",
     icon: <Icon fontSize="small">leaderboard</Icon>,
     route: "/ranking",
-    component: <UserRanking />
+    component: <UserRanking />,
+    authRequired: false
   },
   {
     type: "collapse",
@@ -85,7 +91,8 @@ const routes = [
     key: "notification",
     icon: <Icon fontSize="small">notifications</Icon>,
     route: "/notifications",
-    component: <Notifications />
+    component: <Notifications />,
+    authRequired: true
   },
   {
     type: "collapse",
@@ -93,7 +100,9 @@ const routes = [
     key: "sign-in",
     icon: <Icon fontSize="small">login</Icon>,
     route: "/authentication/sign-in",
-    component: <SignIn />
+    component: <SignIn />,
+    authRequired: false,
+    hideWithAuth: true
   },
   {
     type: "collapse",
@@ -101,7 +110,9 @@ const routes = [
     key: "sign-up",
     icon: <Icon fontSize="small">assignment</Icon>,
     route: "/authentication/sign-up",
-    component: <SignUp />
+    component: <SignUp />,
+    authRequired: false,
+    hideWithAuth: true
   },
   {
     type: "collapse",

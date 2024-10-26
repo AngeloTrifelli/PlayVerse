@@ -3,7 +3,7 @@ import time
 from datetime import datetime
 
 from flask import Blueprint, jsonify, request
-from flask_cors import cross_origin
+from flask_jwt_extended import create_access_token
 from mysql.connector import Error
 from hashlib import sha256
 from Config import DatabaseConnection
@@ -83,3 +83,28 @@ def register():
         if conn:
             conn.close()
 
+
+@bp.route('/User/login', methods=['POST'])
+def login():
+    logging.info('Received a new request for User/login endpoint')
+
+    conn = DatabaseConnection.get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    payload = request.get_json()
+
+    try:
+        query = 'SELECT * FROM User WHERE username = %s AND password = %s'
+        encoded_password = sha256(str(payload['password']).encode('utf-8')).hexdigest()
+        cursor.execute(query, (payload['username'], encoded_password))
+        user = cursor.fetchone()
+
+        if (user):
+            access_token = create_access_token(identity=payload['username'])
+            return jsonify(access_token=access_token), 200
+        
+        return create_error_response('Invalid credentials!', 400)
+    except Error as e:
+        return create_error_response(e, 500)
+    finally:
+        if conn:
+            conn.close()

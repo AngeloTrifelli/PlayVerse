@@ -1,14 +1,11 @@
 import routes from "routes";
+import { isAuthenticated } from "layouts/authentication/utility/auth-utility";
 
 import Sidenav from "examples/Sidenav";
 
 import theme from "assets/theme";
-import themeRTL from "assets/theme/theme-rtl";
 import brandWhite from "assets/images/logo-ct.png";
 
-import rtlPlugin from "stylis-plugin-rtl";
-import { CacheProvider } from "@emotion/react";
-import createCache from "@emotion/cache";
 
 // @mui material components
 import { ThemeProvider } from "@mui/material/styles";
@@ -27,19 +24,10 @@ export default function App() {
     sidenavColor
   } = controller;
   const [onMouseEnter, setOnMouseEnter] = useState(false);
-  const [rtlCache, setRtlCache] = useState(null);
+  const [filteredRoutes, setFilteredRoutes] = useState([]);  
   const { pathname } = useLocation();
 
-  // Cache for the rtl
-  useMemo(() => {
-    const cacheRtl = createCache({
-      key: "rtl",
-      stylisPlugins: [rtlPlugin],
-    });
-
-    setRtlCache(cacheRtl);
-  }, []);
-
+  
   // Open sidenav when mouse enter on mini sidenav
   const handleOnMouseEnter = () => {
     if (miniSidenav && !onMouseEnter) {
@@ -68,8 +56,30 @@ export default function App() {
     document.scrollingElement.scrollTop = 0;
   }, [pathname]);
 
-  const getRoutes = (allRoutes) =>
-    allRoutes.map((route) => {
+
+  useEffect(() => {
+    const fetchRoutes = async () => {
+      let isUserAuthenticated = await isAuthenticated();
+      let routesToShow = routes.filter(route => {
+        if (route.authRequired && !isUserAuthenticated) {
+          return false;
+        }
+
+        if (route.hideWithAuth && isUserAuthenticated) {
+          return false;
+        }
+
+        return true;
+      });
+      setFilteredRoutes(routesToShow);
+    };
+  
+    fetchRoutes()  
+  }, [pathname]);
+
+ 
+  const getRoutes = (allRoutes) =>   
+    allRoutes.map((route) => {    
       if (route.collapse) {
         return getRoutes(route.collapse);
       }
@@ -81,48 +91,25 @@ export default function App() {
       return null;
     });
 
-  
-  return direction === "rtl" ? (
-    <CacheProvider value={rtlCache}>
-      <ThemeProvider theme={themeRTL}>
-        <CssBaseline />
-        {layout === "dashboard" && (
-          <>
-            <Sidenav
-              color={sidenavColor}
-              brand={brandWhite}
-              brandName="PlayVerse"
-              routes={routes}
-              onMouseEnter={handleOnMouseEnter}
-              onMouseLeave={handleOnMouseLeave}
-            />
-          </>
-        )}
-        <Routes>
-          {getRoutes(routes)}
-          <Route path="*" element={<Navigate to="/dashboard" />} />
-        </Routes>
-      </ThemeProvider>
-    </CacheProvider>
-  ) : (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      {layout === "dashboard" && (
-        <>
-          <Sidenav
-            color={sidenavColor}
-            brand={brandWhite}
-            brandName="PlayVerse"
-            routes={routes}
-            onMouseEnter={handleOnMouseEnter}
-            onMouseLeave={handleOnMouseLeave}
-          />
-        </>
-      )}
-      <Routes>
-        {getRoutes(routes)}
-        <Route path="*" element={<Navigate to="/dashboard" />} />
-      </Routes>
-    </ThemeProvider>
-  );
+  return (<ThemeProvider theme={theme}>
+    <CssBaseline />
+    {layout === "dashboard" && (
+      <>
+        <Sidenav
+          color={sidenavColor}
+          brand={brandWhite}
+          brandName="PlayVerse"
+          routes={filteredRoutes}
+          onMouseEnter={handleOnMouseEnter}
+          onMouseLeave={handleOnMouseLeave}
+        />
+      </>
+    )}
+    <Routes>
+      {getRoutes(filteredRoutes)}
+      <Route path="*" element={<Navigate to="/dashboard" />} />
+    </Routes>
+  </ThemeProvider>
+  )
+   
 }
