@@ -1,18 +1,3 @@
-/**
-=========================================================
-* Material Dashboard 2 React - v2.2.0
-=========================================================
-
-* Product Page: https://www.creative-tim.com/product/material-dashboard-react
-* Copyright 2023 Creative Tim (https://www.creative-tim.com)
-
-Coded by www.creative-tim.com
-
- =========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-*/
-
 // react-routers components
 import { Link } from "react-router-dom";
 
@@ -25,28 +10,16 @@ import Divider from "@mui/material/Divider";
 import Tooltip from "@mui/material/Tooltip";
 import Icon from "@mui/material/Icon";
 
-// Material Dashboard 2 React components
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 
-// Material Dashboard 2 React base styles
-import typography from "assets/theme/base/typography";
 
 function ProfileInfoCard({ title, description, info, action, shadow }) {
   const labels = [];
   const values = [];
-  const { size } = typography;
-
-  // Filtra i campi che vuoi escludere dall'oggetto info (mobile, location)
-  const filteredInfo = Object.keys(info).reduce((acc, key) => {
-    if (key !== "mobile" && key !== "location") {
-      acc[key] = info[key];
-    }
-    return acc;
-  }, {});
-
+  
   // Converti l'oggetto `info` filtrato
-  Object.keys(filteredInfo).forEach((el) => {
+  Object.keys(info).forEach((el) => {
     if (el.match(/[A-Z\s]+/)) {
       const uppercaseLetter = Array.from(el).find((i) => i.match(/[A-Z]+/));
       const newElement = el.replace(
@@ -60,46 +33,44 @@ function ProfileInfoCard({ title, description, info, action, shadow }) {
   });
 
   // Inserisci i valori filtrati nell'array values
-  Object.values(filteredInfo).forEach((el) => values.push(el));
+  Object.values(info).forEach((el) => values.push(el));
 
   // Render degli elementi della card
   const renderItems = labels.map((label, key) => (
-    <MDBox key={label} display="flex" py={1} pr={2}>
-      <MDTypography
-        variant="button"
-        fontWeight="bold"
-        textTransform="capitalize"
-      >
-        {label}: &nbsp;
+    <MDBox key={label} display="flex" py={1} pr={2 }>
+      <MDTypography variant="h6"
+                    fontWeight="bold"
+                    textTransform="capitalize">
+          {label}: &nbsp;
       </MDTypography>
-      <MDTypography variant="button" fontWeight="regular" color="text">
-        &nbsp;{values[key]}
-      </MDTypography>
+      <MDTypography variant="h6" fontWeight="regular" color="text">
+          &nbsp;{values[key]}
+      </MDTypography>        
     </MDBox>
   ));
 
+  const chunkedRenderItems = [];
+  for (let i = 0; i < renderItems.length; i += 2) {
+    chunkedRenderItems.push(renderItems.slice(i, i + 2));
+  }
+
   return (
     <Card sx={{ height: "100%", boxShadow: !shadow && "none" }}>
-      <MDBox
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        pt={2}
-        px={2}
-      >
-        <MDTypography
-          variant="h6"
-          fontWeight="medium"
-          textTransform="capitalize"
-        >
-          {title}
+      <MDBox display="flex"
+             justifyContent="space-between"
+             alignItems="center"
+             pt={2}
+             px={2}>
+        <MDTypography variant="h6"
+                      fontWeight="medium"
+                      textTransform="capitalize">
+            {title}
         </MDTypography>
-        <MDTypography
-          component={Link}
-          to={action.route}
-          variant="body2"
-          color="secondary"
-        >
+
+        <MDTypography component={Link}
+                      to={action.route}
+                      variant="body2"
+                      color="secondary">
           <Tooltip title={action.tooltip} placement="top">
             <Icon>edit</Icon>
           </Tooltip>
@@ -114,7 +85,12 @@ function ProfileInfoCard({ title, description, info, action, shadow }) {
         <MDBox opacity={0.3}>
           <Divider />
         </MDBox>
-        <MDBox>{renderItems}</MDBox>
+        {/* Render each row with a maximum of two elements */}
+        {chunkedRenderItems.map((row, index) => (
+          <MDBox key={index} display="flex" flexDirection="row" justifyContent="space-between" gap={35} mb={1}>
+            {row}
+          </MDBox>
+        ))}
       </MDBox>
     </Card>
   );

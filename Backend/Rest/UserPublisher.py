@@ -4,7 +4,7 @@ from datetime import datetime
 import os
 
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, jwt_required
 from mysql.connector import Error
 from hashlib import sha256
 from Config import DatabaseConnection
@@ -109,6 +109,41 @@ def login():
     finally:
         if conn:
             conn.close()
+
+
+@bp.route('/User/<int:id>/getFriends', methods=['GET'])
+@jwt_required()
+def get_friends(id):
+    logging.info(f"Received a new request for User/getFriends endpoint. User id: {id}")
+
+    conn = DatabaseConnection.get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        query = """SELECT DISTINCT *
+                FROM (
+	                SELECT firstUser_id AS id
+                    FROM FriendOf
+                    WHERE secondUser_id = %s
+                        UNION
+                    SELECT secondUser_id AS id
+                    FROM FriendOf
+                    WHERE firstUser_id = %s
+                ) AS friends JOIN User u ON friends.id = u.id  """
+        params = (id, id)
+        cursor.execute(query, params)
+
+        result = cursor.fetchall()
+
+        return jsonify(result), 200    
+    except Error as e:
+        return create_error_response(e, 500)
+    finally:
+        if conn:
+            conn.close()
+
+    return None
+
             
 @bp.route('/User/getRole', methods=['GET'])
 def get_user_role():

@@ -1,19 +1,13 @@
 import axios from 'axios'
 
+const endpoint = `${process.env.REACT_APP_API_BASE_URL}/Authentication/getIdentity`;
 
-async function isAuthenticated() {
-    const token = localStorage.getItem('token');
+async function isAuthenticated () {
+    let params = prepareAuthHeader();
 
-    if (!token) {
+    if (!params.headers || !params.headers.Authorization) {
         return false;
     }
-
-    let endpoint = `${process.env.REACT_APP_API_BASE_URL}/Authentication/getIdentity`;
-    let params = {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    };
 
     try {
         const response = await axios.get(endpoint, params);
@@ -30,7 +24,45 @@ async function isAuthenticated() {
     }
 }
 
+async function findUser () {
+    let params = prepareAuthHeader();
+
+    if (!params.headers || !params.headers.Authorization) {
+        return null;
+    }
+
+    params.params = {
+        loadUser: true
+    }
+
+    try {
+        const response = await axios.get(endpoint, params);
+
+        if (response.status !== 200) {            
+            return null;
+        }
+
+        return response.data.user;
+    } catch (error) {        
+        return null;
+    }    
+}
+
+function prepareAuthHeader () {
+    let params = {};
+    let token = localStorage.getItem('token')
+
+    if (token) {
+        params['headers'] = {
+            'Authorization': `Bearer ${token}`
+        };
+    }
+
+    return params;
+}
 
 export {
-    isAuthenticated
+    isAuthenticated,
+    findUser,
+    prepareAuthHeader
 }

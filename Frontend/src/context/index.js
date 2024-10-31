@@ -34,7 +34,7 @@ function PlayVerseUIControllerProvider({ children }) {
     openConfigurator: false,
     direction: "ltr",
     layout: "dashboard",
-    darkMode: false,
+    darkMode: false     
   };
 
   const [controller, dispatch] = useReducer(reducer, initialState);
