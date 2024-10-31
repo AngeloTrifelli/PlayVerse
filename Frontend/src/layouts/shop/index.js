@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { findUser } from "layouts/authentication/utility/auth-utility";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Container,
   Grid,
@@ -27,6 +29,7 @@ import MDInput from "components/MDInput";
 import MDButton from "components/MDButton";
 import pxToRem from "assets/theme/functions/pxToRem";
 import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
 
 const Shop = () => {
   const [cart, setCart] = useState([]); // Stato per il carrello
@@ -40,8 +43,11 @@ const Shop = () => {
   const [imageFile, setImageFile] = useState(null); // Stato per il file dell'immagine
   const [fileName, setFileName] = useState("");
   const [description, setDescription] = useState("");
+  const [selectedDescription, setSelectedDescription] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
+  const [userInfo, setUserInfo] = useState({});
+  const navigate = useNavigate();
   const [missingFields, setMissingFields] = useState({
     code: false,
     price: false,
@@ -97,11 +103,22 @@ const Shop = () => {
     setCart([]); // Svuota il carrello dopo il checkout
     setCartOpen(false); // Chiude il carrello dopo il checkout
   };
+  // Funzione per mostrare la descrizione corrispondente
+  const handleViewDetails = (description) => {
+    setSelectedDescription(description);
+  };
   // Funzione per controllare il ruolo dell'utente tramite Axios
   const fetchUserRole = async () => {
+    let userInfo = await findUser();
+
+    if (!userInfo) {
+      navigate("/dashboard");
+    }
+
+    setUserInfo(userInfo);
     let endpoint = `${process.env.REACT_APP_API_BASE_URL}/User/getRole`;
     try {
-      const response = await axios.get(`${endpoint}?id=2`); // Sostituisci '1' con l'ID dinamico dell'utente
+      const response = await axios.get(`${endpoint}?id=${userInfo.id}`); // Sostituisci '1' con l'ID dinamico dell'utente
       console.log(response.data); // Log della risposta
       if (response.data.status === "success") {
         setRole(response.data.role); // Imposta il ruolo dell'utente
@@ -645,10 +662,45 @@ const Shop = () => {
                         >
                           Add to Cart
                         </MDButton>
-                        <MDButton size="small" color="secondary">
+                        <MDButton
+                          size="small"
+                          color="secondary"
+                          onClick={() => handleViewDetails(product.description)}
+                        >
                           View Details
                         </MDButton>
                       </>
+                    )}
+                    {/* Dettagli visualizzati a schermo fisso se è selezionato */}
+                    {selectedDescription && (
+                      <MDBox
+                        sx={{
+                          position: "fixed",
+                          top: "50%", // Centra verticalmente
+                          left: "50%", // Centra orizzontalmente
+                          transform: "translate(-50%, -50%)", // Sposta indietro per centrare esattamente
+                          backgroundColor: "rgba(255, 255, 255, 0.9)", // Colore di sfondo opaco
+                          border: "2px solid #ccc",
+                          padding: 4, // Aumenta il padding
+                          width: "500px", // Larghezza fissa
+                          maxWidth: "90%", // Limita la larghezza massima
+                          boxShadow: "0px 2px 10px rgba(0, 0, 0, 0.3)", // Ombra per visibilità
+                          zIndex: 1000,
+                          borderRadius: "8px" // Aggiunge bordi arrotondati
+                        }}
+                      >
+                        <MDTypography variant="h6">Details</MDTypography>
+                        <MDTypography variant="body1">
+                          {selectedDescription}
+                        </MDTypography>
+                        <MDButton
+                          size="small"
+                          color="primary"
+                          onClick={() => setSelectedDescription(null)} // Pulsante per chiudere la descrizione
+                        >
+                          Close
+                        </MDButton>
+                      </MDBox>
                     )}
                   </CardActions>
                 </Card>
@@ -663,7 +715,7 @@ const Shop = () => {
         {role?.trim() !== "ADMIN" && ( // Controlla se non è un amministratore
           <IconButton
             onClick={() => setCartOpen(!isCartOpen)}
-            sx={{ position: "absolute", top: 20, right: 20 }}
+            sx={{ position: "absolute", top: 10, right: 20 }} // Modificato il valore di top
           >
             <Badge badgeContent={cart.length} color="secondary">
               <ShoppingCartIcon />
@@ -676,10 +728,10 @@ const Shop = () => {
           <Box
             sx={{
               position: "fixed",
-              top: "70px",
+              top: "10px", // Sposta il box ancora più in alto
               right: "20px",
               width: "300px",
-              backgroundColor: "white",
+              backgroundColor: "white", // Colore di sfondo bianco, non trasparente
               border: "1px solid #ccc",
               borderRadius: "8px",
               boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
@@ -687,6 +739,12 @@ const Shop = () => {
               zIndex: 1000
             }}
           >
+            <IconButton
+              onClick={() => setCartOpen(false)} // Chiudi il carrello
+              sx={{ position: "absolute", top: 5, right: 5 }} // Posizionamento dell'icona di chiusura
+            >
+              <CloseIcon /> {/* Icona di chiusura */}
+            </IconButton>
             <Typography variant="h6" gutterBottom>
               Cart
             </Typography>
@@ -698,7 +756,11 @@ const Shop = () => {
                   sx={{
                     display: "flex",
                     justifyContent: "space-between",
-                    mb: 1
+                    mb: 1,
+                    backgroundColor: "white", // Sfondo non trasparente per ogni prodotto
+                    padding: "8px", // Padding per ogni prodotto
+                    borderRadius: "4px", // Angoli arrotondati
+                    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.1)" // Ombra leggera per ogni prodotto
                   }}
                 >
                   <Typography>

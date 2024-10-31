@@ -1,4 +1,6 @@
+import { findUser } from "layouts/authentication/utility/auth-utility";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 // @mui/material components
 import Grid from "@mui/material/Grid";
@@ -15,17 +17,11 @@ import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import axios from "axios"; // Importa Axios per fare richieste HTTP
 
 function UserRanking() {
-  const [users] = useState([
-    { name: "Mario Rossi", punteggio: 85 },
-    { name: "Luca Bianchi", punteggio: 92 },
-    { name: "Sara Verdi", punteggio: 78 },
-    { name: "Giulia Neri", punteggio: 88 },
-    { name: "Francesco Gialli", punteggio: 65 }
-  ]);
-
   const [user, setUser] = useState([]); // Stato per i user
   const [error, setError] = useState(null); // Stato per gestire errori di richiesta
   const sortedUsers = [...user].sort((a, b) => b.points - a.points);
+  const [userInfo, setUserInfo] = useState({});
+  const navigate = useNavigate();
 
   // Definiamo le icone e colori per il podio (oro, argento, bronzo)
   const getMedalIcon = (index) => {
@@ -50,6 +46,13 @@ function UserRanking() {
   };
 
   const fetchUser = async () => {
+    let userInfo = await findUser();
+
+    if (!userInfo) {
+      navigate("/dashboard");
+    }
+
+    setUserInfo(userInfo);
     let endpoint = `${process.env.REACT_APP_API_BASE_URL}/User/getAllUser`;
     try {
       const response = await axios.get(endpoint);
@@ -132,7 +135,7 @@ function UserRanking() {
               {/* Mostra l'utente loggato se non è nei primi 10 */}
               {!sortedUsers
                 .slice(0, 10)
-                .some((user) => user.id === loggedInUser.id) && (
+                .some((user) => user.id === userInfo.id) && (
                 <MDBox mt={3} pb={2} textAlign="center">
                   <Card
                     sx={{
@@ -149,11 +152,11 @@ function UserRanking() {
                     >
                       <MDBox display="flex" alignItems="center">
                         <MDTypography variant="h6" color="primary">
-                          {loggedInUser.username}
+                          {userInfo.username}
                         </MDTypography>
                       </MDBox>
                       <MDTypography variant="h6" color="textSecondary">
-                        Punteggio: {loggedInUser.points}
+                        Punteggio: {userInfo.points}
                       </MDTypography>
                     </MDBox>
                   </Card>

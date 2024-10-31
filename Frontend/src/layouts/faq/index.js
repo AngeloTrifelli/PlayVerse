@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { findUser } from "layouts/authentication/utility/auth-utility";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Container,
   Grid,
@@ -34,6 +36,8 @@ const FAQ = () => {
   const [id, setID] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
+  const [userInfo, setUserInfo] = useState({});
+  const navigate = useNavigate();
   const [missingFields, setMissingFields] = useState({
     title: false,
     description: false
@@ -53,9 +57,16 @@ const FAQ = () => {
 
   // Funzione per controllare il ruolo dell'utente tramite Axios
   const fetchUserRole = async () => {
+    let userInfo = await findUser();
+
+    if (!userInfo) {
+      navigate("/dashboard");
+    }
+
+    setUserInfo(userInfo);
     let endpoint = `${process.env.REACT_APP_API_BASE_URL}/User/getRole`;
     try {
-      const response = await axios.get(`${endpoint}?id=1`); // Sostituisci '1' con l'ID dinamico dell'utente
+      const response = await axios.get(`${endpoint}?id=${userInfo.id}`); // Sostituisci '1' con l'ID dinamico dell'utente
       console.log(response.data); // Log della risposta
       if (response.data.status === "success") {
         setRole(response.data.role); // Imposta il ruolo dell'utente
