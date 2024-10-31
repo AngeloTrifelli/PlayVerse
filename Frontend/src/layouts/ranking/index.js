@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // @mui/material components
 import Grid from "@mui/material/Grid";
@@ -12,6 +12,7 @@ import MDTypography from "components/MDTypography";
 // Material Dashboard 2 React example components
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
+import axios from "axios"; // Importa Axios per fare richieste HTTP
 
 function UserRanking() {
   const [users] = useState([
@@ -22,7 +23,9 @@ function UserRanking() {
     { name: "Francesco Gialli", punteggio: 65 }
   ]);
 
-  const sortedUsers = [...users].sort((a, b) => b.punteggio - a.punteggio);
+  const [user, setUser] = useState([]); // Stato per i user
+  const [error, setError] = useState(null); // Stato per gestire errori di richiesta
+  const sortedUsers = [...user].sort((a, b) => b.points - a.points);
 
   // Definiamo le icone e colori per il podio (oro, argento, bronzo)
   const getMedalIcon = (index) => {
@@ -46,6 +49,34 @@ function UserRanking() {
     return "0px 2px 10px rgba(0, 0, 0, 0.1)"; // Ombra di default
   };
 
+  const fetchUser = async () => {
+    let endpoint = `${process.env.REACT_APP_API_BASE_URL}/User/getAllUser`;
+    try {
+      const response = await axios.get(endpoint);
+      const UserData = response.data
+        .filter((user) => user.role?.trim() === "PLAYER" && !user.suspended) // Filtra solo utenti con ruolo "USER" senza spazi e non sospesi
+        .map((user) => ({
+          id: user.id,
+          username: user.username,
+          role: user.role?.trim(), // Applica trim per uniformità
+          points: user.points
+        }));
+
+      setUser(UserData);
+    } catch (error) {
+      setError("There was an error fetching users");
+      console.error(
+        "Error fetching users:",
+        error.response?.data || error.message
+      );
+    }
+  };
+
+  // Usa useEffect per chiamare fetchUserRole quando il componente si monta
+  useEffect(() => {
+    fetchUser();
+  }, []);
+
   return (
     <DashboardLayout>
       <DashboardNavbar />
@@ -58,7 +89,8 @@ function UserRanking() {
               </MDBox>
               <MDBox pt={2} px={2} pb={2}>
                 <Grid container spacing={2}>
-                  {sortedUsers.map((user, index) => (
+                  {/* Mostra solo i primi 10 utenti */}
+                  {sortedUsers.slice(0, 10).map((user, index) => (
                     <Grid item xs={12} key={index}>
                       <Card
                         sx={{
@@ -85,11 +117,11 @@ function UserRanking() {
                               </Icon>
                             )}
                             <MDTypography variant="h6">
-                              {index + 1}. {user.name}
+                              {index + 1}. {user.username}
                             </MDTypography>
                           </MDBox>
                           <MDTypography variant="h6" color="textSecondary">
-                            Punteggio: {user.punteggio}
+                            Punteggio: {user.points}
                           </MDTypography>
                         </MDBox>
                       </Card>
@@ -97,6 +129,36 @@ function UserRanking() {
                   ))}
                 </Grid>
               </MDBox>
+              {/* Mostra l'utente loggato se non è nei primi 10 */}
+              {!sortedUsers
+                .slice(0, 10)
+                .some((user) => user.id === loggedInUser.id) && (
+                <MDBox mt={3} pb={2} textAlign="center">
+                  <Card
+                    sx={{
+                      boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
+                      borderRadius: "12px",
+                      backgroundColor: "#f0f0f0"
+                    }}
+                  >
+                    <MDBox
+                      p={2}
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
+                      <MDBox display="flex" alignItems="center">
+                        <MDTypography variant="h6" color="primary">
+                          {loggedInUser.username}
+                        </MDTypography>
+                      </MDBox>
+                      <MDTypography variant="h6" color="textSecondary">
+                        Punteggio: {loggedInUser.points}
+                      </MDTypography>
+                    </MDBox>
+                  </Card>
+                </MDBox>
+              )}
             </Card>
           </Grid>
         </Grid>

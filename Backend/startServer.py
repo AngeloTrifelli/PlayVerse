@@ -1,6 +1,8 @@
 import logging
 from Rest import UserPublisher
 from Rest import AuthPublisher
+from Rest import ProductPublisher
+from Rest import FAQPublisher
 
 from flask import Flask, request
 from flask_cors import CORS
@@ -14,10 +16,11 @@ app.config['JWT_SECRET_KEY'] = SECRET_KEY
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)         #The authentication token will expire after 1 hour
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
-
 #Register publisher endpoints
 app.register_blueprint(UserPublisher.bp)
 app.register_blueprint(AuthPublisher.bp)
+app.register_blueprint(ProductPublisher.bp)
+app.register_blueprint(FAQPublisher.bp)
 
 #Enable JWT Authentication 
 JWTManager(app)
