@@ -1,4 +1,6 @@
-import axios from 'axios'
+import axios from 'axios';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const endpoint = `${process.env.REACT_APP_API_BASE_URL}/Authentication/getIdentity`;
 
@@ -61,8 +63,21 @@ function prepareAuthHeader () {
     return params;
 }
 
+function LogOut() {
+    const navigate = useNavigate();
+
+    useEffect(() => {        
+        localStorage.removeItem('token');        
+        navigate('/dashboard');
+    }, [navigate]);
+
+    return null;
+}
+
+
 export {
     isAuthenticated,
     findUser,
-    prepareAuthHeader
+    prepareAuthHeader,
+    LogOut
 }
