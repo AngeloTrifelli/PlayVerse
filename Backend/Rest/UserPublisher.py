@@ -84,6 +84,7 @@ def register():
     finally:
         if conn:
             conn.close()
+            
 @bp.route('/User/login', methods=['POST'])
 def login():
     logging.info('Received a new request for User/login endpoint')
@@ -182,59 +183,29 @@ def get_user_role():
         if conn:
             conn.close()
 
-@bp.route('/User/products', methods=['POST'])
-def insert_product():
-    print("Received a new request for Product/add endpoint")
+@bp.route('/User/getAllUser', methods=['GET'])
+def get_all_faq():
+    logging.info("Received a new request for endpoint /User/getAllUser")
     
-    UPLOAD_FOLDER = "./images/products"
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
+    # Connessione al database
     conn = DatabaseConnection.get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-
-    code = request.form.get('code')
-    price = request.form.get('price')
-    description = request.form.get('description')
     
-    image_file = request.files.get('imageFile')
-    if not image_file:
-        return jsonify({'error': 'No file provided!'}), 400
-
-    # Controllo se l'immagine esiste già nel database
-    cursor.execute("SELECT * FROM Product WHERE photo = %s", (image_file.filename,))
-    existing_image = cursor.fetchone()
-    if existing_image:
-        return create_error_response('Image already exists, change name!', 500)
-
-    original_filename = image_file.filename
-    extension = os.path.splitext(original_filename)[1]
-    new_filename = f"{code}{extension}"
-    file_path = os.path.abspath(os.path.join(UPLOAD_FOLDER, new_filename))  # Usa il percorso assoluto
-
-    print(f"Attempting to save image to: {file_path}")
-
-    # Controlla se il file esiste già nella cartella di destinazione
-    if os.path.exists(file_path):
-        return jsonify({'error': 'File already exists! Please rename the file and try again.'}), 400
+    if conn is None:
+        logging.error("Database connection failed.")
+        return create_error_response('Database connection failed', 500)
 
     try:
-        # Insert into products table
-        insert_query = "INSERT INTO Product (code, description, photo, price) VALUES (%s,%s, %s, %s)"
-        params = (code, description, new_filename, price)
+        cursor = conn.cursor(dictionary=True)
+        query = "SELECT * FROM User"
+        cursor.execute(query)  # Esegui la query
+        users = cursor.fetchall()  # Usa fetchall() per ottenere tutte le righe
 
-        cursor.execute(insert_query, params)
-        conn.commit()
-
-        image_file.save(file_path)
-        if os.path.exists(file_path):
-            print(f"File saved successfully at: {file_path}")
+        if users:
+            return jsonify(users)  # Restituisci un array di oggetti FAQ
         else:
-            print("File NOT found after saving attempt!")
-        
-        return jsonify({'success': True, 'message': 'Product added successfully!'}), 201
-    except Exception as e:
-        print(f"Error saving file: {e}")
-        return create_error_response(str(e), 500)
+            return create_error_response('User not found', 404)
+    except Error as e:
+        return create_error_response(str(e), 500)  # Restituisci l'errore come stringa
     finally:
         if conn:
             conn.close()
