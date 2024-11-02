@@ -36,7 +36,7 @@ const UserModerationPage = () => {
   const [userInfo, setUserInfo] = useState({});
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchUser = async () => {
       try {
         let userInfo = await findUser();
 
@@ -46,7 +46,7 @@ const UserModerationPage = () => {
         if (response && response.data) {
           let userData = processUserResponse(response.data, userInfo);
 
-          setUsers(userData);
+          setUser(userData);
           setOriginalUsers(userData);
           setLoggedUserData(userInfo);
         }
@@ -78,7 +78,7 @@ const UserModerationPage = () => {
     let filteredUsers = originalUsers.filter((user) =>
       user.username.toLowerCase().includes(searchQuery.toLowerCase())
     );
-    setUsers(filteredUsers);
+    setUser(filteredUsers);
   };
 
   const handleSearchReset = () => {
@@ -165,7 +165,7 @@ const UserModerationPage = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {users.map((user) => (
+          {user.map((user) => (
             <TableRow key={user.id}>
               <TableCell>{user.username}</TableCell>
               <TableCell>{user.name + " " + user.surname}</TableCell>
