@@ -210,10 +210,118 @@ def get_all_user():
         if conn:
             conn.close()
 
+from datetime import datetime, timedelta
+from flask import jsonify, request
+import logging
+
 @bp.route('/User/SuspendedUser', methods=['POST'])
 def SuspendedUser():
     logging.info("Received a new request for endpoint /User/SuspendedUser")
  
+    conn = DatabaseConnection.get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    payload = request.get_json()
+
+    if conn is None:
+        logging.error("Database connection failed.")
+        return create_error_response('Database connection failed', 500)
+
+    try:
+        # Recupera l'utente esistente
+        cursor.execute("SELECT * FROM User WHERE id = %s", (payload['id'],))
+        user = cursor.fetchone()
+
+        if user is None:
+            logging.warning(f"No user found with id: {payload['id']}")
+            return create_error_response("user not found", 404)
+
+        # Controlla la durata nel payload
+        if payload['duration'] == 0:
+            # Azione da eseguire se duration è 0 (annullamento della sospensione)
+            cursor.execute("""
+                UPDATE User 
+                SET suspended = %s, suspensionEnd = NULL
+                WHERE id = %s
+            """, (False, payload['id']))  # Sospensione annullata
+            logging.info(f"User with id {payload['id']} has been unsuspended.")
+        else:
+            # Azione da eseguire se duration è diverso da 0 (sospensione)
+         # Calcola la data di fine sospensione
+            suspension_duration_hours = int(payload['duration'])  # Assicurati che questo sia un intero
+            suspension_end = datetime.now() + timedelta(hours=suspension_duration_hours)
+            cursor.execute("""
+                UPDATE User 
+                SET suspended = %s, suspensionEnd = %s
+                WHERE id = %s
+            """, (True, suspension_end, payload['id']))  # Sospensione attivata
+            logging.info(f"User with id {payload['id']} has been suspended until {suspension_end}.")
+
+        # Salva le modifiche
+        conn.commit()
+
+        return jsonify({"message": "User status updated successfully"}), 200
+
+    except Exception as e:
+        logging.error(f"Database error occurred: {str(e)}")
+        return create_error_response(str(e), 500)
+
+    finally:
+        if conn:
+            conn.close()
+
+@bp.route('/User/BannedUser', methods=['POST'])
+def BannedUser():
+    logging.info("Received a new request for endpoint /User/BannedUser")
+ 
+    conn = DatabaseConnection.get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    payload = request.get_json()
+
+    if conn is None:
+        logging.error("Database connection failed.")
+        return create_error_response('Database connection failed', 500)
+
+    try:
+        # Recupera l'utente esistente
+        cursor.execute("SELECT * FROM User WHERE id = %s", (payload['id'],))
+        user = cursor.fetchone()
+
+        if user is None:
+            logging.warning(f"No user found with id: {payload['id']}")
+            return create_error_response("user not found", 404)
+
+        if payload.get('banReason') is None or payload['banReason'] == "":
+            cursor.execute("""
+                UPDATE User 
+                SET banned = %s, banReason = %s
+                WHERE id = %s
+            """, (False, None, payload['id']))  # Unban
+            logging.info(f"User with id {payload['id']} has been unbanned.")
+        else:
+            cursor.execute("""
+                UPDATE User 
+                SET banned = %s, banReason = %s
+                WHERE id = %s
+            """, (True, payload['banReason'], payload['id']))  # Ban
+            logging.info(f"User with id {payload['id']} has been banned.")
+
+
+        # Salva le modifiche
+        conn.commit()
+
+        return jsonify({"message": "User status updated successfully"}), 200
+
+    except Exception as e:
+        logging.error(f"Database error occurred: {str(e)}")
+        return create_error_response(str(e), 500)
+
+    finally:
+        if conn:
+            conn.close()
+
+@bp.route('/User/ModeratorUser', methods=['POST'])
+def ModeratorUser():
+    logging.info("Received a new request for endpoint /User/ModeratorUser")
 
     conn = DatabaseConnection.get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -224,32 +332,33 @@ def SuspendedUser():
         return create_error_response('Database connection failed', 500)
 
     try:
-        # Recupera l'immagine esistente
+        # Recupera l'utente esistente
         cursor.execute("SELECT * FROM User WHERE id = %s", (payload['id'],))
         user = cursor.fetchone()
 
         if user is None:
-            logging.warning(f"No user found with code: {code}")
-            return create_error_response("user not found", 404)
-
-        # Esegui l'aggiornamento del prodotto
-        query = """
-            UPDATE User 
-            SET suspended = %s
-            WHERE id = %s
-        """
-        cursor.execute(query, (payload['suspended'], payload['id']))
-
-        # Controllo per verificare che l'aggiornamento sia avvenuto
-        if cursor.rowcount == 0:
             logging.warning(f"No user found with id: {payload['id']}")
             return create_error_response("user not found", 404)
+
+        # Determina il nuovo ruolo basato sul ruolo attuale dell'utente
+        if user['role'] == "MODERATOR":  # Se l'utente è attualmente un moderatore
+            new_role = "PLAYER"  # Rimuovi il ruolo di moderatore
+            logging.info(f"User with id {payload['id']} is being demoted to PLAYER.")
+        else:  # Se l'utente non è un moderatore
+            new_role = "MODERATOR"  # Assegna il ruolo di moderatore
+            logging.info(f"User with id {payload['id']} is being promoted to MODERATOR.")
+
+        # Aggiorna il ruolo dell'utente
+        cursor.execute("""
+            UPDATE User 
+            SET role = %s
+            WHERE id = %s
+        """, (new_role, payload['id']))
 
         # Salva le modifiche
         conn.commit()
 
-        logging.info(f"user with code {payload['id']} updated successfully.")
-        return jsonify({"message": "user updated successfully"}), 200
+        return jsonify({"message": "User status updated successfully"}), 200
 
     except Exception as e:
         logging.error(f"Database error occurred: {str(e)}")
@@ -258,6 +367,8 @@ def SuspendedUser():
     finally:
         if conn:
             conn.close()
+
+
 
 @bp.route('/User/<int:id>/getUserList', methods=['GET'])
 @jwt_required()
