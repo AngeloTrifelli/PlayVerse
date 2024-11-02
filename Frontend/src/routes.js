@@ -27,7 +27,7 @@ import Notifications from "layouts/notifications";
 import Games from "layouts/games";
 import UserRanking from "layouts/ranking";
 // @mui icons
-import UserList from "layouts/user_list"; 
+import UserList from "layouts/user_list";
 import Icon from "@mui/material/Icon";
 
 const routes = [
@@ -120,7 +120,8 @@ const routes = [
     key: "user-list",
     icon: <Icon fontSize="small">person</Icon>,
     route: "/user_list",
-    component: <UserList />
+    component: <UserList />,
+    authRequired: true
   }
 ];
 

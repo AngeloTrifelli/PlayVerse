@@ -184,7 +184,7 @@ def get_user_role():
             conn.close()
 
 @bp.route('/User/getAllUser', methods=['GET'])
-def get_all_faq():
+def get_all_user():
     logging.info("Received a new request for endpoint /User/getAllUser")
     
     # Connessione al database
@@ -201,11 +201,99 @@ def get_all_faq():
         users = cursor.fetchall()  # Usa fetchall() per ottenere tutte le righe
 
         if users:
-            return jsonify(users)  # Restituisci un array di oggetti FAQ
+            return jsonify(users)  # Restituisci un array di oggetti User
         else:
             return create_error_response('User not found', 404)
     except Error as e:
         return create_error_response(str(e), 500)  # Restituisci l'errore come stringa
+    finally:
+        if conn:
+            conn.close()
+
+@bp.route('/User/SuspendedUser', methods=['POST'])
+def SuspendedUser():
+    logging.info("Received a new request for endpoint /User/SuspendedUser")
+ 
+
+    conn = DatabaseConnection.get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    payload = request.get_json()
+
+    if conn is None:
+        logging.error("Database connection failed.")
+        return create_error_response('Database connection failed', 500)
+
+    try:
+        # Recupera l'immagine esistente
+        cursor.execute("SELECT * FROM User WHERE id = %s", (payload['id'],))
+        user = cursor.fetchone()
+
+        if user is None:
+            logging.warning(f"No user found with code: {code}")
+            return create_error_response("user not found", 404)
+
+        # Esegui l'aggiornamento del prodotto
+        query = """
+            UPDATE User 
+            SET suspended = %s
+            WHERE id = %s
+        """
+        cursor.execute(query, (payload['suspended'], payload['id']))
+
+        # Controllo per verificare che l'aggiornamento sia avvenuto
+        if cursor.rowcount == 0:
+            logging.warning(f"No user found with id: {payload['id']}")
+            return create_error_response("user not found", 404)
+
+        # Salva le modifiche
+        conn.commit()
+
+        logging.info(f"user with code {payload['id']} updated successfully.")
+        return jsonify({"message": "user updated successfully"}), 200
+
+    except Exception as e:
+        logging.error(f"Database error occurred: {str(e)}")
+        return create_error_response(str(e), 500)
+
+    finally:
+        if conn:
+            conn.close()
+
+@bp.route('/User/<int:id>/getUserList', methods=['GET'])
+@jwt_required()
+def get_user_list(id):
+    logging.info(f"Received a new request for User/getFriends endpoint. User id: {id}")
+    conn = DatabaseConnection.get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        query = """SELECT 
+                        u.id,
+                        u.username, 
+                        u.name, 
+                        u.surname,
+                        u.role, 
+                        u.suspended, 
+                        u.banned,
+                        CASE
+                            WHEN f.firstUser_id IS NOT NULL OR f.secondUser_id IS NOT NULL THEN 1
+                            ELSE 0
+                        END AS isFriend,
+                        CASE 
+                            WHEN n.id IS NOT NULL THEN 1
+                            ELSE 0
+                        END AS friendRequestSent
+                        FROM User u 
+                        LEFT JOIN FriendOf f 
+                            ON (f.firstUser_id = u.id AND f.secondUser_id = %s) OR (f.firstUser_id = %s AND f.secondUser_id = u.id)
+                        LEFT JOIN Notification n
+                            ON (n.user_id = u.id AND n.friendRequester_id = %s AND n.type = 'FRIEND_REQUEST')                                                
+        """
+        cursor.execute(query, (id, id, id))
+        result = cursor.fetchall()    
+        return jsonify(result), 200
+    except Error as e:
+        return create_error_response(e, 500)
     finally:
         if conn:
             conn.close()
