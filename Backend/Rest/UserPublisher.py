@@ -263,6 +263,7 @@ def SuspendedUser():
 @jwt_required()
 def get_user_list(id):
     logging.info(f"Received a new request for User/getFriends endpoint. User id: {id}")
+
     conn = DatabaseConnection.get_db_connection()
     cursor = conn.cursor(dictionary=True)
     
@@ -289,11 +290,14 @@ def get_user_list(id):
                         LEFT JOIN Notification n
                             ON (n.user_id = u.id AND n.friendRequester_id = %s AND n.type = 'FRIEND_REQUEST')                                                
         """
+
         cursor.execute(query, (id, id, id))
         result = cursor.fetchall()    
+
         return jsonify(result), 200
     except Error as e:
         return create_error_response(e, 500)
     finally:
         if conn:
             conn.close()
+

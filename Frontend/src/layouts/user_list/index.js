@@ -29,16 +29,14 @@ import MDBox from "components/MDBox";
 import pxToRem from "assets/theme/functions/pxToRem";
 const UserModerationPage = () => {
   const [originalUsers, setOriginalUsers] = useState([]);
-  const [users, setUsers] = useState([]);
   const [loggedUserData, setLoggedUserData] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState([]); // Stato per i user
   const [error, setError] = useState(null); // Stato per gestire errori di richiesta
   const [userInfo, setUserInfo] = useState({});
 
-  // Simulazione di una chiamata API per ottenere gli utenti
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchUsers = async () => {
       try {
         let userInfo = await findUser();
 
@@ -56,6 +54,7 @@ const UserModerationPage = () => {
         console.error(error);
       }
     };
+
     const processUserResponse = function (userData, loggedUserData) {
       let processedData = userData.filter((user) => {
         if (loggedUserData.role === "PLAYER" && user.role !== "PLAYER") {
@@ -71,6 +70,7 @@ const UserModerationPage = () => {
 
       return processedData;
     };
+
     fetchUser();
   }, []);
 
@@ -83,9 +83,8 @@ const UserModerationPage = () => {
 
   const handleSearchReset = () => {
     setSearchQuery("");
-    setUsers(originalUsers);
+    setUser(originalUsers);
   };
-
   const handleSuspendToggle = async (event, userId) => {
     const userToUpdate = user.find((u) => u.id === userId);
     const updatedSuspendedValue = !userToUpdate.suspended;

@@ -29,6 +29,7 @@ import UserRanking from "layouts/ranking";
 // @mui icons
 import UserList from "layouts/user_list";
 import Icon from "@mui/material/Icon";
+import { LogOut } from "layouts/authentication/utility/auth-utility";
 
 const routes = [
   {
@@ -116,12 +117,30 @@ const routes = [
   },
   {
     type: "collapse",
+    name: "User List",
+    key: "user-list",
+    icon: <Icon fontSize="small">person</Icon>,
+    route: "/userList",
+    component: <UserList />,
+    authRequired: true
+  },
+  {
+    type: "collapse",
     name: "User List (mod)",
     key: "user-list",
     icon: <Icon fontSize="small">person</Icon>,
     route: "/user_list",
     component: <UserList />,
     authRequired: true
+  },
+  {
+    name: "Log Out",
+    key: "logout",
+    icon: <Icon fontSize="small">logout</Icon>,
+    route: "/logout",
+    component: <LogOut />,
+    authRequired: true,
+    hideWithAuth: false
   }
 ];
 
