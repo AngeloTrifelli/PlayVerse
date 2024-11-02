@@ -209,3 +209,46 @@ def get_all_faq():
     finally:
         if conn:
             conn.close()
+
+@bp.route('/User/<int:id>/getUserList', methods=['GET'])
+@jwt_required()
+def get_user_list(id):
+    logging.info(f"Received a new request for User/getFriends endpoint. User id: {id}")
+
+    conn = DatabaseConnection.get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    
+    try:
+        query = """SELECT 
+                        u.id,
+                        u.username, 
+                        u.name, 
+                        u.surname,
+                        u.role, 
+                        u.suspended, 
+                        u.banned,
+                        CASE
+                            WHEN f.firstUser_id IS NOT NULL OR f.secondUser_id IS NOT NULL THEN 1
+                            ELSE 0
+                        END AS isFriend,
+                        CASE 
+                            WHEN n.id IS NOT NULL THEN 1
+                            ELSE 0
+                        END AS friendRequestSent
+                        FROM User u 
+                        LEFT JOIN FriendOf f 
+                            ON (f.firstUser_id = u.id AND f.secondUser_id = %s) OR (f.firstUser_id = %s AND f.secondUser_id = u.id)
+                        LEFT JOIN Notification n
+                            ON (n.user_id = u.id AND n.friendRequester_id = %s AND n.type = 'FRIEND_REQUEST')                                                
+        """
+
+        cursor.execute(query, (id, id, id))
+        result = cursor.fetchall()    
+
+        return jsonify(result), 200
+    except Error as e:
+        return create_error_response(e, 500)
+    finally:
+        if conn:
+            conn.close()
