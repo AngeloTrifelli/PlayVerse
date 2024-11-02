@@ -36,7 +36,7 @@ const UserModerationPage = () => {
   const [originalUsers, setOriginalUsers] = useState([]);
   const [loggedUserData, setLoggedUserData] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
-  const [user, setUser] = useState([]); // Stato per i user
+  const [users, setUsers] = useState([]); // Stato per i user
   const [error, setError] = useState(null); // Stato per gestire errori di richiesta
   const [suspendDuration, setSuspendDuration] = useState(""); // Stato per la durata della sospensione
   const [suspendUserId, setSuspendUserId] = useState(null); // ID dell'utente da sospendere
@@ -46,7 +46,7 @@ const UserModerationPage = () => {
   const [isBannedDialogOpen, setIsBannedDialogOpen] = useState(false); // Stato per il dialogo di ban
   const [moderatorUserId, setModeratorUserId] = useState(null);
   const [isModeratorDialogOpen, setIsModeratorDialogOpen] = useState(false);
-  const isAnotherModeratorPresent = user.some(
+  const isAnotherModeratorPresent = users.some(
     (user) => user.role === "MODERATOR" && user.id !== loggedUserData.id
   );
 
@@ -61,7 +61,7 @@ const UserModerationPage = () => {
         if (response && response.data) {
           let userData = processUserResponse(response.data, userInfo);
 
-          setUser(userData);
+          setUsers(userData);
           setOriginalUsers(userData);
           setLoggedUserData(userInfo);
         }
@@ -95,15 +95,40 @@ const UserModerationPage = () => {
     let filteredUsers = originalUsers.filter((user) =>
       user.username.toLowerCase().includes(searchQuery.toLowerCase())
     );
-    setUser(filteredUsers);
+    setUsers(filteredUsers);
   };
 
   const handleSearchReset = () => {
     setSearchQuery("");
-    setUser(originalUsers);
+    setUsers(originalUsers);
   };
+
+  const handleFriendRequest = async (userId) => {  
+    let endpoint = `${process.env.REACT_APP_API_BASE_URL}/Notification/create`;
+    let payload = {
+      type: 'FRIEND_REQUEST',
+      description: `${loggedUserData.username} wants to be your friend!`,
+      user_id: userId,
+      friendRequester_id: loggedUserData.id      
+    };
+
+    try {
+      let response = await axios.post(endpoint, payload, prepareAuthHeader())
+
+      if (response.status === 201) {
+        let updatedUsers = users.map((user) => 
+          user.id === userId ? { ...user, friendRequestSent: true} : user
+        );
+
+        setUsers(updatedUsers);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  
   const handleSuspendToggle = (userId) => {
-    const userToToggle = user.find((u) => u.id === userId);
+    const userToToggle = users.find((u) => u.id === userId);
     if (userToToggle) {
       setSuspendUserId(userId);
       setSuspendDuration(""); // Reset della durata
@@ -111,7 +136,7 @@ const UserModerationPage = () => {
     }
   };
   const handleBANToggle = (userId) => {
-    const userToToggle = user.find((u) => u.id === userId);
+    const userToToggle = users.find((u) => u.id === userId);
     if (userToToggle) {
       setBannedUserId(userId);
       setBannedReason(""); // Reset della ragione
@@ -121,7 +146,7 @@ const UserModerationPage = () => {
 
   const handleBANConfirm = async () => {
     // Trova l'utente corrente
-    const userToUpdate = user.find((u) => u.id === BannedUserId);
+    const userToUpdate = users.find((u) => u.id === BannedUserId);
 
     if (!userToUpdate) {
       console.error(`Utente con ID ${BannedUserId} non trovato.`);
@@ -132,10 +157,10 @@ const UserModerationPage = () => {
     const updatedBannedValue = !isCurrentlyBanned; // Inverti il valore di ban
 
     // Aggiorna lo stato locale
-    const updatedUsers = user.map((u) =>
+    const updatedUsers = users.map((u) =>
       u.id === BannedUserId ? { ...u, banned: updatedBannedValue } : u
     );
-    setUser(updatedUsers);
+    setUsers(updatedUsers);
 
     let endpoint = `${process.env.REACT_APP_API_BASE_URL}/User/BannedUser`;
     try {
@@ -166,7 +191,7 @@ const UserModerationPage = () => {
 
   const handleSuspendConfirm = async () => {
     // Trova l'utente corrente
-    const userToUpdate = user.find((u) => u.id === suspendUserId);
+    const userToUpdate = users.find((u) => u.id === suspendUserId);
 
     if (!userToUpdate) {
       console.error(`Utente con ID ${suspendUserId} non trovato.`);
@@ -177,10 +202,10 @@ const UserModerationPage = () => {
     const updatedSuspendedValue = !isCurrentlySuspended; // Inverti il valore di sospensione
 
     // Aggiorna lo stato locale
-    const updatedUsers = user.map((u) =>
+    const updatedUsers = users.map((u) =>
       u.id === suspendUserId ? { ...u, suspended: updatedSuspendedValue } : u
     );
-    setUser(updatedUsers);
+    setUsers(updatedUsers);
 
     let endpoint = `${process.env.REACT_APP_API_BASE_URL}/User/SuspendedUser`;
     try {
@@ -209,7 +234,7 @@ const UserModerationPage = () => {
     setSuspendDuration(""); // Reset del valore di durata
   };
   const handleMODERATORToggle = (userId) => {
-    const userToToggle = user.find((u) => u.id === userId);
+    const userToToggle = users.find((u) => u.id === userId);
     if (userToToggle) {
       setModeratorUserId(userId);
       setIsModeratorDialogOpen(true); // Apri il dialogo senza ritardo
@@ -217,7 +242,7 @@ const UserModerationPage = () => {
   };
 
   const handleModerateConfirm = async () => {
-    const userToUpdate = user.find((u) => u.id === moderatorUserId);
+    const userToUpdate = users.find((u) => u.id === moderatorUserId);
 
     if (!userToUpdate) {
       console.error(`Utente con ID ${moderatorUserId} non trovato.`);
@@ -237,7 +262,7 @@ const UserModerationPage = () => {
       if (response.status === 200) {
         console.log(response.data.message);
         // Aggiorna lo stato locale per riflettere la modifica
-        setUser((prevUsers) =>
+        setUsers((prevUsers) =>
           prevUsers.map((u) =>
             u.id === moderatorUserId ? { ...u, role: newRole } : u
           )
@@ -263,28 +288,22 @@ const UserModerationPage = () => {
         User List
       </Typography>
       <MDBox mx={2} mb={4} display="flex" flex-direction="row">
-        <MDInput
-          label="Search username..."
-          onChange={(event) => setSearchQuery(event.target.value)}
-          value={searchQuery}
-          fullWidth
-        />
-        <MDButton
-          variant="gradient"
-          color="info"
-          size="small"
-          onClick={handleSearch}
-          sx={{ marginLeft: pxToRem(10), marginRight: pxToRem(10) }}
-        >
-          Search
+        <MDInput label="Search username..."
+                 onChange={(event) => setSearchQuery(event.target.value)}
+                 value={searchQuery}
+                 fullWidth />
+        <MDButton variant="gradient"
+                  color="info"
+                  size="small"
+                  onClick={handleSearch}
+                  sx={{ marginLeft: pxToRem(10), marginRight: pxToRem(10) }}>
+                Search
         </MDButton>
-        <MDButton
-          variant="gradient"
-          color="error"
-          size="small"
-          onClick={handleSearchReset}
-        >
-          Reset
+        <MDButton variant="gradient"
+                  color="error"
+                  size="small"
+                  onClick={handleSearchReset}>
+                Reset
         </MDButton>
       </MDBox>
       <Table>
@@ -305,7 +324,7 @@ const UserModerationPage = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {user.map((user) => (
+          {users.map((user) => (
             <TableRow key={user.id}>
               <TableCell>{user.username}</TableCell>
               <TableCell>{user.name + " " + user.surname}</TableCell>
@@ -325,7 +344,8 @@ const UserModerationPage = () => {
                     variant="gradient"
                     color="info"
                     size="medium"
-                    disabled={user.friendRequestSent}
+                    disabled={user.friendRequestSent || user.isFriend}
+                    onClick={() => handleFriendRequest(user.id)}
                   >
                     {!user.friendRequestSent
                       ? "Send Friend Request"
@@ -378,12 +398,12 @@ const UserModerationPage = () => {
         onClose={() => setIsSuspendDialogOpen(false)}
       >
         <DialogTitle>
-          {user.find((u) => u.id === suspendUserId)?.suspended
+          {users.find((u) => u.id === suspendUserId)?.suspended
             ? "Unsuspend User"
             : "Suspend User"}
         </DialogTitle>
         <DialogContent>
-          {user.find((u) => u.id === suspendUserId)?.suspended ? (
+          {users.find((u) => u.id === suspendUserId)?.suspended ? (
             <Typography>
               The user is currently suspended. Would you like to lift the
               suspension?
@@ -407,7 +427,7 @@ const UserModerationPage = () => {
             Cancel
           </Button>
           <Button onClick={handleSuspendConfirm} color="primary">
-            {user.find((u) => u.id === suspendUserId)?.suspended
+            {users.find((u) => u.id === suspendUserId)?.suspended
               ? "Unsuspend"
               : "Suspend"}
           </Button>
@@ -418,12 +438,12 @@ const UserModerationPage = () => {
         onClose={() => setIsBannedDialogOpen(false)}
       >
         <DialogTitle>
-          {user.find((u) => u.id === BannedUserId)?.banned
+          {users.find((u) => u.id === BannedUserId)?.banned
             ? "UnBanned User"
             : "Banned User"}
         </DialogTitle>
         <DialogContent>
-          {user.find((u) => u.id === BannedUserId)?.banned ? (
+          {users.find((u) => u.id === BannedUserId)?.banned ? (
             <Typography>
               The user is currently suspended. Would you like to lift the
               suspension?
@@ -447,7 +467,7 @@ const UserModerationPage = () => {
             Cancel
           </Button>
           <Button onClick={handleBANConfirm} color="primary">
-            {user.find((u) => u.id === BannedUserId)?.banned
+            {users.find((u) => u.id === BannedUserId)?.banned
               ? "UnBanned"
               : "Banned"}
           </Button>
@@ -458,12 +478,12 @@ const UserModerationPage = () => {
         onClose={() => setIsModeratorDialogOpen(false)} // Cambiato da setIsSuspendDialogOpen a setIsModeratorDialogOpen
       >
         <DialogTitle>
-          {user.find((u) => u.id === moderatorUserId)?.role === "MODERATOR"
+          {users.find((u) => u.id === moderatorUserId)?.role === "MODERATOR"
             ? "Unmoderate User"
             : "Moderate User"}{" "}
         </DialogTitle>
         <DialogContent>
-          {user.find((u) => u.id === moderatorUserId)?.role === "MODERATOR" ? ( // Cambiato da suspendUserId a moderatorUserId
+          {users.find((u) => u.id === moderatorUserId)?.role === "MODERATOR" ? ( // Cambiato da suspendUserId a moderatorUserId
             <Typography>
               Do you really want to remove the role "moderator" from the user{" "}
               {moderatorUserId}?
@@ -482,7 +502,7 @@ const UserModerationPage = () => {
             Cancel
           </Button>
           <Button onClick={handleModerateConfirm} color="primary">
-            {user.find((u) => u.id === moderatorUserId)?.role === "MODERATOR" // Cambiato da suspendUserId a moderatorUserId
+            {users.find((u) => u.id === moderatorUserId)?.role === "MODERATOR" // Cambiato da suspendUserId a moderatorUserId
               ? "Unmoderate"
               : "Promote to Moderator"}{" "}
           </Button>

@@ -373,7 +373,7 @@ def ModeratorUser():
 @bp.route('/User/<int:id>/getUserList', methods=['GET'])
 @jwt_required()
 def get_user_list(id):
-    logging.info(f"Received a new request for User/getFriends endpoint. User id: {id}")
+    logging.info(f"Received a new request for User/getUserList endpoint. User id: {id}")
 
     conn = DatabaseConnection.get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -412,3 +412,24 @@ def get_user_list(id):
         if conn:
             conn.close()
 
+
+@bp.route('/User/<int:id>/getNotifications', methods=['GET'])
+@jwt_required()
+def get_notifications(id):
+    logging.info(f"Received a new request for User/getNotifications endpoint. User id: {id}")
+
+    conn = DatabaseConnection.get_db_connection()
+    cursor = conn.cursor(dictionary=True)    
+
+    try:
+        query = "SELECT * FROM Notification WHERE user_id = %s AND seen = 0"
+        cursor.execute(query, (id, ))        
+
+        notification_list = cursor.fetchall()
+
+        return jsonify(notification_list), 200
+    except Error as e:
+        return create_error_response(e, 500)
+    finally:
+        if conn:
+            conn.close()

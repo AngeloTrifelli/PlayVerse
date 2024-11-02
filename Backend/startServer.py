@@ -3,6 +3,7 @@ from Rest import UserPublisher
 from Rest import AuthPublisher
 from Rest import ProductPublisher
 from Rest import FAQPublisher
+from Rest import NotificationPublisher
 
 from flask import Flask, request
 from flask_cors import CORS
@@ -21,6 +22,7 @@ app.register_blueprint(UserPublisher.bp)
 app.register_blueprint(AuthPublisher.bp)
 app.register_blueprint(ProductPublisher.bp)
 app.register_blueprint(FAQPublisher.bp)
+app.register_blueprint(NotificationPublisher.bp)
 
 #Enable JWT Authentication 
 JWTManager(app)
