@@ -123,7 +123,6 @@ const GameCatalog = () => {
 
         try {
           const response = await axios.post(endpoint, gameData);
-
           if (response.data.success) {
             console.log("Tempo di gioco salvato con successo!");
           } else {
@@ -132,13 +131,15 @@ const GameCatalog = () => {
               response.data.message
             );
           }
+          alert(
+            `Hai guadagnato ${response.data.total_points_today} su 100 massimi giornalieri`
+          );
         } catch (error) {
           console.error(
             "Errore durante la chiamata al server:",
             error.response || error.message
           );
         }
-        alert(`Hai giocato per ${timePlayed} secondi`);
         setGameWindow(null);
       } else {
         console.error("Errore: selectedGame è null.");
