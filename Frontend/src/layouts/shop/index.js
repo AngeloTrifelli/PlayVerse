@@ -97,12 +97,50 @@ const Shop = () => {
       .toFixed(2);
   };
 
-  // Gestione del checkout
-  const handleCheckout = () => {
-    alert(`Total: €${getTotalPrice()}. Thank you for your purchase!`);
-    setCart([]); // Svuota il carrello dopo il checkout
-    setCartOpen(false); // Chiude il carrello dopo il checkout
+  const handleCheckout = async () => {
+    // Calcola il prezzo totale
+    const totalPrice = getTotalPrice();
+
+    // Controlla se i crediti dell'utente sono sufficienti
+    if (userInfo.credits < totalPrice) {
+      alert("Insufficient credits to complete the purchase.");
+      return; // Ferma l'esecuzione della funzione se i crediti non sono sufficienti
+    }
+
+    // Prepara i dati da inviare al backend
+    const orderData = {
+      total_price: totalPrice, // Aggiungi il prezzo totale qui
+      items: cart.map((item) => ({
+        userid: userInfo.id,
+        code: item.code,
+        quantity: item.quantity
+      }))
+    };
+
+    let endpoint = `${process.env.REACT_APP_API_BASE_URL}/Product/Checkout`;
+
+    try {
+      // Invia una richiesta POST al backend per aggiornare i valori della tabella
+      const response = await axios.post(endpoint, orderData);
+
+      // Gestisci la risposta dal backend
+      if (response.data.success) {
+        alert(
+          `Order placed successfully! Total: $${totalPrice}. Thank you for your purchase!`
+        );
+        setCart([]); // Svuota il carrello dopo il checkout
+        setCartOpen(false); // Chiude il carrello dopo il checkout
+      } else {
+        alert("There was an issue placing your order. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error during checkout:", error);
+      alert(
+        "An error occurred while placing your order. Please try again later."
+      );
+    }
   };
+
   // Funzione per mostrare la descrizione corrispondente
   const handleViewDetails = (description) => {
     setSelectedDescription(description);
@@ -618,9 +656,11 @@ const Shop = () => {
                   <CardMedia
                     component="img"
                     height="140"
-                    src={product.image}
+                    //src={`../products/${product.image}`}
+                    src={`http://localhost:5000/images/products/${product.image}`}
                     alt={product.code}
                   />
+
                   <CardContent>
                     <MDTypography gutterBottom variant="h5" component="div">
                       {product.code}
@@ -629,7 +669,7 @@ const Shop = () => {
                       {product.description}
                     </MDTypography>
                     <MDTypography variant="h6" color="primary">
-                      €{product.price.toFixed(2)}
+                      {product.price.toFixed(2)}
                     </MDTypography>
                   </CardContent>
                   <CardActions>
@@ -784,7 +824,7 @@ const Shop = () => {
             )}
             {/* Mostra il prezzo totale */}
             <Typography variant="h6" sx={{ mt: 2 }}>
-              Total: €{getTotalPrice()}
+              Total: {getTotalPrice()}
             </Typography>
             {/* Pulsante per il checkout */}
             <Button

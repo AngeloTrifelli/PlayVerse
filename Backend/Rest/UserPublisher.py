@@ -1,6 +1,5 @@
 import logging
-import time
-from datetime import datetime
+from datetime import datetime, timedelta, timezone, time
 import os
 
 from flask import Blueprint, jsonify, request
@@ -84,7 +83,7 @@ def register():
     finally:
         if conn:
             conn.close()
-            
+
 @bp.route('/User/login', methods=['POST'])
 def login():
     logging.info('Received a new request for User/login endpoint')
@@ -99,16 +98,52 @@ def login():
         cursor.execute(query, (payload['username'], encoded_password))
         user = cursor.fetchone()
 
-        if (user):
+        if user:
+            logging.info(f'User data: {user}')  # Log dei dati dell'utente
+
+            # Controllo se l'utente è bannato
+            if user.get('banned'):
+
+                return create_error_response('User is banned. Access denied.', 403)
+
+            # Controllo se l'utente è sospeso
+            if user.get('suspended'):
+                suspension_end = user.get('suspensionEnd')  # Assumendo che 'suspensionEnd' sia la colonna nel DB
+                if suspension_end:  # Assicurati che la data di fine sospensione esista
+                    ## Conversione a UTC
+                    current_date = datetime.now()
+
+                    # Controlla se la data di fine sospensione è scaduta
+                    if current_date > suspension_end:
+                        # Rimuovi la sospensione e aggiorna il database
+                        update_query = "UPDATE User SET suspended = FALSE, suspensionEnd = NULL WHERE id = %s"
+                        cursor.execute(update_query, (user['id'],))
+                        conn.commit()
+
+                        # Genera il token di accesso se l'utente è ora attivo
+                        access_token = create_access_token(identity=payload['username'])
+                        return jsonify(access_token=access_token), 200
+                    else:
+                        # La sospensione è ancora attiva
+                        return create_error_response(
+                            f'User is suspended until {suspension_end.strftime("%Y-%m-%d %H:%M:%S")}',
+                            403
+                        )
+
+            # Genera il token di accesso se l'utente non è né bannato né sospeso
             access_token = create_access_token(identity=payload['username'])
             return jsonify(access_token=access_token), 200
-        
+
         return create_error_response('Invalid credentials!', 400)
+
     except Error as e:
-        return create_error_response(e, 500)
+        logging.error(f'Error during login: {str(e)}')  # Log dell'errore
+        return create_error_response(str(e), 500)
+    
     finally:
         if conn:
             conn.close()
+
 
 
 @bp.route('/User/<int:id>/getFriends', methods=['GET'])
@@ -247,8 +282,10 @@ def SuspendedUser():
         else:
             # Azione da eseguire se duration è diverso da 0 (sospensione)
          # Calcola la data di fine sospensione
-            suspension_duration_hours = int(payload['duration'])  # Assicurati che questo sia un intero
-            suspension_end = datetime.now() + timedelta(hours=suspension_duration_hours)
+            suspension_duration_hours = int(payload['duration']) # Assicurati che questo sia un intero
+            # Calcola la data e l'ora attuali fino ai secondi
+            suspension_end = datetime.now().replace(microsecond=0) + timedelta(hours=suspension_duration_hours)
+            logging.info(f"Suspension end at time {suspension_end}.")
             cursor.execute("""
                 UPDATE User 
                 SET suspended = %s, suspensionEnd = %s

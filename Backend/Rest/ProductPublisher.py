@@ -3,7 +3,7 @@ import time
 from datetime import datetime
 import os
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, send_from_directory
 from flask_jwt_extended import create_access_token
 from mysql.connector import Error
 from hashlib import sha256
@@ -19,14 +19,20 @@ def create_error_response(errorMessage, statusCode):
         return jsonify({'error': errorMessage})
     else:
         return jsonify({'error': errorMessage}), statusCode
-    
 
+# Servire i file statici dalla cartella 'images/products'
+@bp.route('/images/products/<path:filename>', methods=['GET'])
+def serve_image(filename):
+    return send_from_directory(os.path.join('images', 'products'), filename)
+
+    
 @bp.route('/Product/insert_product', methods=['POST'])
 def insert_product():
-    print("Received a new request for Product/add endpoint")
-    
-    UPLOAD_FOLDER = "./images/products"
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    logging.info("Received a new request for Product/insert_product endpoint")
+
+    # Cartella per il caricamento delle immagini nel backend
+    BACKEND_UPLOAD_FOLDER = Path("./images/products")
+    BACKEND_UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)  # Crea la cartella se non esiste
 
     conn = DatabaseConnection.get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -37,47 +43,47 @@ def insert_product():
     
     image_file = request.files.get('imageFile')
     if not image_file:
-        return jsonify({'error': 'No file provided!'}), 400
+        return create_error_response('No file provided!', 400)
 
     # Controllo se l'immagine esiste già nel database
     cursor.execute("SELECT * FROM Product WHERE photo = %s", (image_file.filename,))
     existing_image = cursor.fetchone()
     if existing_image:
-        return create_error_response('Image already exists, change name!', 500)
+        return create_error_response('Image already exists, change name!', 400)
 
     original_filename = image_file.filename
     extension = os.path.splitext(original_filename)[1]
     new_filename = f"{code}{extension}"
-    file_path = os.path.abspath(os.path.join(UPLOAD_FOLDER, new_filename))  # Usa il percorso assoluto
+    
+    # Percorso completo per salvare nel backend
+    backend_file_path = BACKEND_UPLOAD_FOLDER / new_filename  
 
-    print(f"Attempting to save image to: {file_path}")
+    logging.info(f"Attempting to save image to backend: {backend_file_path}")
 
-    # Controlla se il file esiste già nella cartella di destinazione
-    if os.path.exists(file_path):
-        return jsonify({'error': 'File already exists! Please rename the file and try again.'}), 400
+    # Controlla se il file esiste già nella cartella di destinazione del backend
+    if backend_file_path.exists():
+        return create_error_response('File already exists in backend! Please rename the file and try again.', 400)
 
     try:
         # Insert into products table
-        insert_query = "INSERT INTO Product (code, description, photo, price) VALUES (%s,%s, %s, %s)"
+        insert_query = "INSERT INTO Product (code, description, photo, price) VALUES (%s, %s, %s, %s)"
         params = (code, description, new_filename, price)
 
         cursor.execute(insert_query, params)
         conn.commit()
 
-        image_file.save(file_path)
-        if os.path.exists(file_path):
-            print(f"File saved successfully at: {file_path}")
-        else:
-            print("File NOT found after saving attempt!")
-        
+        # Salva l'immagine in entrambe le cartelle
+        image_file.save(backend_file_path)
+
+        logging.info(f"File saved successfully at: {backend_file_path} and {frontend_file_path}")
+
         return jsonify({'success': True, 'message': 'Product added successfully!'}), 201
     except Exception as e:
-        print(f"Error saving file: {e}")
+        logging.error(f"Error saving file: {str(e)}")
         return create_error_response(str(e), 500)
     finally:
         if conn:
             conn.close()
-
 @bp.route('/Product/getAllProducts', methods=['GET'])
 def get_all_products():
     logging.info("Received a new request for endpoint /Product/getAllProducts")
@@ -239,6 +245,68 @@ def update_product():
     except Exception as e:
         logging.error(f"Database error occurred: {str(e)}")
         return create_error_response(str(e), 500)
+
+    finally:
+        if conn:
+            conn.close()
+
+@bp.route('/Product/Checkout', methods=['POST'])
+def checkout():
+    logging.info("Received a new request for Product/Checkout endpoint")
+
+    conn = DatabaseConnection.get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Ottieni i dati dal corpo della richiesta
+    order_data = request.json
+    items = order_data.get('items', [])
+    total_price = float(order_data.get('total_price', 0))  # Assicurati che sia un numero
+
+    if not items:
+        return create_error_response('No items provided!', 400)
+
+    try:
+        for item in items:
+            user_id = item.get('userid')
+            code = item.get('code')
+            quantity = item.get('quantity')
+
+            if not user_id or not code or not quantity:
+                return create_error_response('Missing item fields!', 400)
+
+            created_at = datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
+
+            insert_order_query = "INSERT INTO Purchase (user_id, product_code, quantity, purchaseDate) VALUES (%s, %s, %s,%s)"
+            cursor.execute(insert_order_query, (user_id, code, quantity, created_at))
+        
+        cursor.execute("SELECT credits FROM User WHERE id = %s", (user_id,))
+        user_credits = cursor.fetchone()
+
+        # Controlla se l'utente esiste e ha crediti sufficienti
+        if user_credits is None:
+            return create_error_response('User not found!', 404)
+
+        current_credits = user_credits['credits']  # Assumi che i crediti siano nel campo 'credits'
+
+        if current_credits < total_price:
+            return create_error_response('Insufficient credits!', 400)
+
+        # Sottrai il totale speso dai crediti dell'utente
+        credits_after_purchase = current_credits - total_price
+        
+        # Aggiorna i crediti nel database
+        update_credits_query = "UPDATE User SET credits=%s WHERE id=%s"
+        cursor.execute(update_credits_query, (credits_after_purchase, user_id))
+            
+
+
+        conn.commit()
+        logging.info(f"Checkout successful. Total price: {total_price}")
+        return jsonify({'success': True, 'total_price': total_price}), 201
+
+    except Exception as e:
+        logging.error(f"Error during checkout: {str(e)}")
+        return create_error_response('An error occurred while processing your order. Please try again later.', 500)
 
     finally:
         if conn:

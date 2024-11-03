@@ -1,53 +1,67 @@
-import React, { useState } from 'react';
-import { Grid, Card, CardMedia, CardContent, Typography, Button, Dialog, DialogTitle, DialogContent } from '@mui/material';
+import { findUser } from "layouts/authentication/utility/auth-utility";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Grid,
+  Card,
+  CardMedia,
+  CardContent,
+  Typography,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent
+} from "@mui/material";
 import pumpkin from "assets/images/pumpkin.jpg";
 import kraft from "assets/images/kraft.jpg";
 import nippets from "assets/images/nippets.jpg";
 import tanuki from "assets/images/tanuki.jpg";
 import truck from "assets/images/truck.jpg";
 import vampire from "assets/images/vampire.jpg";
+import axios from "axios"; // Assicurati di aver importato axios
 const games = [
   {
     id: 1,
-    title: 'Pumpkin Cafe',
-    image: pumpkin ,
-    description: 'A cozy Halloween themed cooking game',
-    gameUrl: 'https://ilymeiib.itch.io/pumpkin-cafe' // URL del gioco
+    title: "Pumpkin Cafe",
+    image: pumpkin,
+    description: "A cozy Halloween themed cooking game",
+    gameUrl: "https://ilymeiib.itch.io/pumpkin-cafe" // URL del gioco
   },
   {
     id: 2,
-    title: 'Kraft & Slash',
+    title: "Kraft & Slash",
     image: kraft,
-    description: 'Craft your weapon and fight!',
-    gameUrl: 'https://purejamgames.itch.io/kraft-slash' // URL del gioco
+    description: "Craft your weapon and fight!",
+    gameUrl: "https://purejamgames.itch.io/kraft-slash" // URL del gioco
   },
   {
     id: 3,
-    title: 'Nippets',
+    title: "Nippets",
     image: nippets,
-    description: 'Hidden Object Game',
-    gameUrl: 'https://vatnisse-interactive.itch.io/nippets' // URL del gioco
+    description: "Hidden Object Game",
+    gameUrl: "https://vatnisse-interactive.itch.io/nippets" // URL del gioco
   },
   {
     id: 4,
-    title: 'Tanuki Sunset',
+    title: "Tanuki Sunset",
     image: tanuki,
-    description: 'Raccoons riding longboards on this retro themed relaxing arcade game',
-    gameUrl: 'https://rewindgames.itch.io/tanuki-sunset' // URL del gioco
+    description:
+      "Raccoons riding longboards on this retro themed relaxing arcade game",
+    gameUrl: "https://rewindgames.itch.io/tanuki-sunset" // URL del gioco
   },
   {
     id: 5,
-    title: 'Tiny Truck Racing',
+    title: "Tiny Truck Racing",
     image: truck,
-    description: 'Race tiny trucks around tiny tracks!',
-    gameUrl: 'https://benjames171.itch.io/tiny-truck-racing' // URL del gioco
+    description: "Race tiny trucks around tiny tracks!",
+    gameUrl: "https://benjames171.itch.io/tiny-truck-racing" // URL del gioco
   },
   {
     id: 6,
-    title: 'Vampire Survivors',
+    title: "Vampire Survivors",
     image: vampire,
-    description: 'Mow thousands of night creatures and survive!',
-    gameUrl: 'https://poncle.itch.io/vampire-survivors' // URL del gioco
+    description: "Mow thousands of night creatures and survive!",
+    gameUrl: "https://poncle.itch.io/vampire-survivors" // URL del gioco
   }
 ];
 
@@ -55,6 +69,8 @@ const GameCatalog = () => {
   const [open, setOpen] = useState(false);
   const [selectedGame, setSelectedGame] = useState(null);
   const [gameWindow, setGameWindow] = useState(null); // Stato per tracciare la finestra del gioco
+  const [userInfo, setUserInfo] = useState({});
+  const navigate = useNavigate();
 
   let localStartTime = null; // Variabile locale per tracciare l'inizio della sessione di gioco
 
@@ -71,7 +87,7 @@ const GameCatalog = () => {
 
   // Apre il gioco in una nuova finestra e traccia il tempo
   const handlePlayClick = (game) => {
-    const openedWindow = window.open(game.gameUrl, '_blank'); // Apre il gioco in una nuova finestra
+    const openedWindow = window.open(game.gameUrl, "_blank"); // Apre il gioco in una nuova finestra
     setGameWindow(openedWindow);
     localStartTime = Date.now(); // Imposta il tempo di inizio della sessione di gioco con una variabile locale
 
@@ -79,42 +95,74 @@ const GameCatalog = () => {
     const interval = setInterval(() => {
       if (openedWindow.closed) {
         clearInterval(interval); // Ferma l'intervallo quando la finestra è chiusa
+        setSelectedGame(game);
+
         handleGameEnd(); // Calcola il tempo giocato
       }
     }, 1000);
   };
 
-  // Calcola il tempo giocato e invia i dati al server
-  const handleGameEnd = () => {
+  const handleGameEnd = async (game) => {
     const endTime = Date.now();
 
-    // Verifica che localStartTime sia impostato correttamente
     if (localStartTime) {
-      const timePlayed = ((endTime - localStartTime) / 1000).toFixed(2); // Calcola il tempo giocato in secondi e arrotonda a due decimali
+      const timePlayed = ((endTime - localStartTime) / 1000).toFixed(2);
 
-      // Mostra il tempo di gioco all'utente con un alert
-      alert(`Hai giocato per ${timePlayed} secondi`);
+      // Controlla se selectedGame è valido
+      if (selectedGame) {
+        console.log("Selected Game:", selectedGame); // Log per controllare i dati
+        const gameData = {
+          game: selectedGame.title, // Usa il titolo dal selectedGame
+          userId: userInfo.id,
+          timePlayed: parseFloat(timePlayed),
+          gameEndTime: new Date().toISOString()
+        };
 
-      // Invia il tempo di gioco al server (qui simulato)
-      /*fetch('/api/saveTime', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          gameId: selectedGame.id,
-          timePlayed: timePlayed,
-        }),
-      }).then(() => {
-        console.log('Tempo di gioco salvato con successo!');
-      });
-      */
-      // Resetta lo stato dopo che la sessione di gioco è finita
-      setGameWindow(null);
+        let endpoint = `${process.env.REACT_APP_API_BASE_URL}/Game/PlayedGame`;
+        console.log("Invio dati a:", endpoint);
+
+        try {
+          const response = await axios.post(endpoint, gameData);
+
+          if (response.data.success) {
+            console.log("Tempo di gioco salvato con successo!");
+          } else {
+            console.error(
+              "Errore nel salvataggio del tempo di gioco:",
+              response.data.message
+            );
+          }
+        } catch (error) {
+          console.error(
+            "Errore durante la chiamata al server:",
+            error.response || error.message
+          );
+        }
+        alert(`Hai giocato per ${timePlayed} secondi`);
+        setGameWindow(null);
+      } else {
+        console.error("Errore: selectedGame è null.");
+      }
     } else {
-      console.error("Errore: il tempo di inizio non è stato registrato correttamente.");
+      console.error(
+        "Errore: il tempo di inizio non è stato registrato correttamente."
+      );
     }
   };
+
+  const fetchUser = async () => {
+    let userInfo = await findUser();
+
+    if (!userInfo) {
+      navigate("/dashboard");
+    }
+
+    setUserInfo(userInfo);
+  };
+  // Usa useEffect per chiamare fetchUserRole quando il componente si monta
+  useEffect(() => {
+    fetchUser();
+  }, []);
 
   return (
     <>
@@ -159,9 +207,7 @@ const GameCatalog = () => {
         <Dialog open={open} onClose={handleClose}>
           <DialogTitle>{selectedGame.title}</DialogTitle>
           <DialogContent>
-            <Typography variant="body1">
-              {selectedGame.description}
-            </Typography>
+            <Typography variant="body1">{selectedGame.description}</Typography>
           </DialogContent>
         </Dialog>
       )}

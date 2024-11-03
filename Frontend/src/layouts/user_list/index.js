@@ -103,21 +103,21 @@ const UserModerationPage = () => {
     setUsers(originalUsers);
   };
 
-  const handleFriendRequest = async (userId) => {  
+  const handleFriendRequest = async (userId) => {
     let endpoint = `${process.env.REACT_APP_API_BASE_URL}/Notification/create`;
     let payload = {
-      type: 'FRIEND_REQUEST',
+      type: "FRIEND_REQUEST",
       description: `${loggedUserData.username} wants to be your friend!`,
       user_id: userId,
-      friendRequester_id: loggedUserData.id      
+      friendRequester_id: loggedUserData.id
     };
 
     try {
-      let response = await axios.post(endpoint, payload, prepareAuthHeader())
+      let response = await axios.post(endpoint, payload, prepareAuthHeader());
 
       if (response.status === 201) {
-        let updatedUsers = users.map((user) => 
-          user.id === userId ? { ...user, friendRequestSent: true} : user
+        let updatedUsers = users.map((user) =>
+          user.id === userId ? { ...user, friendRequestSent: true } : user
         );
 
         setUsers(updatedUsers);
@@ -126,7 +126,7 @@ const UserModerationPage = () => {
       console.error(error);
     }
   };
-  
+
   const handleSuspendToggle = (userId) => {
     const userToToggle = users.find((u) => u.id === userId);
     if (userToToggle) {
@@ -195,6 +195,10 @@ const UserModerationPage = () => {
 
     if (!userToUpdate) {
       console.error(`Utente con ID ${suspendUserId} non trovato.`);
+      return; // Esci se non trovi l'utente
+    }
+    if (suspendDuration < 0) {
+      console.error(`Ore negative non sono accettate.`);
       return; // Esci se non trovi l'utente
     }
 
@@ -288,22 +292,28 @@ const UserModerationPage = () => {
         User List
       </Typography>
       <MDBox mx={2} mb={4} display="flex" flex-direction="row">
-        <MDInput label="Search username..."
-                 onChange={(event) => setSearchQuery(event.target.value)}
-                 value={searchQuery}
-                 fullWidth />
-        <MDButton variant="gradient"
-                  color="info"
-                  size="small"
-                  onClick={handleSearch}
-                  sx={{ marginLeft: pxToRem(10), marginRight: pxToRem(10) }}>
-                Search
+        <MDInput
+          label="Search username..."
+          onChange={(event) => setSearchQuery(event.target.value)}
+          value={searchQuery}
+          fullWidth
+        />
+        <MDButton
+          variant="gradient"
+          color="info"
+          size="small"
+          onClick={handleSearch}
+          sx={{ marginLeft: pxToRem(10), marginRight: pxToRem(10) }}
+        >
+          Search
         </MDButton>
-        <MDButton variant="gradient"
-                  color="error"
-                  size="small"
-                  onClick={handleSearchReset}>
-                Reset
+        <MDButton
+          variant="gradient"
+          color="error"
+          size="small"
+          onClick={handleSearchReset}
+        >
+          Reset
         </MDButton>
       </MDBox>
       <Table>
@@ -329,7 +339,11 @@ const UserModerationPage = () => {
               <TableCell>{user.username}</TableCell>
               <TableCell>{user.name + " " + user.surname}</TableCell>
               <TableCell>
-                {user.suspended || user.banned ? "Suspended" : "Active"}
+                {user.suspended
+                  ? "Suspended"
+                  : user.banned
+                  ? "Banned"
+                  : "Active"}
               </TableCell>
               {loggedUserData.role === "PLAYER" && (
                 <TableCell>

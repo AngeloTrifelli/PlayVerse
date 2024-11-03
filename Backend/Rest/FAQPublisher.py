@@ -170,3 +170,4 @@ def update_product():
     finally:
         if conn:
             conn.close()
+
