@@ -10,7 +10,8 @@ import {
   Button,
   Dialog,
   DialogTitle,
-  DialogContent
+  DialogContent,
+  Modal // Import Modal from MUI
 } from "@mui/material";
 import pumpkin from "assets/images/pumpkin.jpg";
 import kraft from "assets/images/kraft.jpg";
@@ -18,63 +19,65 @@ import nippets from "assets/images/nippets.jpg";
 import tanuki from "assets/images/tanuki.jpg";
 import truck from "assets/images/truck.jpg";
 import vampire from "assets/images/vampire.jpg";
-import axios from "axios"; // Assicurati di aver importato axios
+import axios from "axios"; // Import axios
+
 const games = [
   {
     id: 1,
     title: "Pumpkin Cafe",
     image: pumpkin,
     description: "A cozy Halloween themed cooking game",
-    gameUrl: "https://ilymeiib.itch.io/pumpkin-cafe" // URL del gioco
+    gameUrl: "https://ilymeiib.itch.io/pumpkin-cafe" // Game URL
   },
   {
     id: 2,
     title: "Kraft & Slash",
     image: kraft,
     description: "Craft your weapon and fight!",
-    gameUrl: "https://purejamgames.itch.io/kraft-slash" // URL del gioco
+    gameUrl: "https://purejamgames.itch.io/kraft-slash" // Game URL
   },
   {
     id: 3,
     title: "Nippets",
     image: nippets,
     description: "Hidden Object Game",
-    gameUrl: "https://vatnisse-interactive.itch.io/nippets" // URL del gioco
+    gameUrl: "https://vatnisse-interactive.itch.io/nippets" // Game URL
   },
   {
     id: 4,
     title: "Tanuki Sunset",
     image: tanuki,
-    description:
-      "Raccoons riding longboards on this retro themed relaxing arcade game",
-    gameUrl: "https://rewindgames.itch.io/tanuki-sunset" // URL del gioco
+    description: "Raccoons riding longboards in this retro themed arcade game",
+    gameUrl: "https://rewindgames.itch.io/tanuki-sunset" // Game URL
   },
   {
     id: 5,
     title: "Tiny Truck Racing",
     image: truck,
     description: "Race tiny trucks around tiny tracks!",
-    gameUrl: "https://benjames171.itch.io/tiny-truck-racing" // URL del gioco
+    gameUrl: "https://benjames171.itch.io/tiny-truck-racing" // Game URL
   },
   {
     id: 6,
     title: "Vampire Survivors",
     image: vampire,
     description: "Mow thousands of night creatures and survive!",
-    gameUrl: "https://poncle.itch.io/vampire-survivors" // URL del gioco
+    gameUrl: "https://poncle.itch.io/vampire-survivors" // Game URL
   }
 ];
 
 const GameCatalog = () => {
   const [open, setOpen] = useState(false);
   const [selectedGame, setSelectedGame] = useState(null);
-  const [gameWindow, setGameWindow] = useState(null); // Stato per tracciare la finestra del gioco
+  const [showModal, setShowModal] = useState(false); // State for modal
+  const [modalMessage, setModalMessage] = useState(""); // State for modal message
+  const [gameWindow, setGameWindow] = useState(null); // State for tracking the game window
   const [userInfo, setUserInfo] = useState({});
   const navigate = useNavigate();
 
-  let localStartTime = null; // Variabile locale per tracciare l'inizio della sessione di gioco
+  let localStartTime = null; // Local variable to track the start time of the game session
 
-  // Apre il dialogo con i dettagli del gioco
+  // Opens the dialog with the game details
   const handleOpen = (game) => {
     setSelectedGame(game);
     setOpen(true);
@@ -85,60 +88,64 @@ const GameCatalog = () => {
     setSelectedGame(null);
   };
 
-  // Apre il gioco in una nuova finestra e traccia il tempo
-  const handlePlayClick = (game) => {
-    const openedWindow = window.open(game.gameUrl, "_blank"); // Apre il gioco in una nuova finestra
-    setGameWindow(openedWindow);
-    localStartTime = Date.now(); // Imposta il tempo di inizio della sessione di gioco con una variabile locale
+  // Opens the modal with a specific message
+  const openModal = (message) => {
+    setModalMessage(message);
+    setShowModal(true);
+  };
 
-    // Monitora la chiusura della finestra del gioco ogni secondo
+  // Opens the game in a new window and tracks the time played
+  const handlePlayClick = (game) => {
+    const openedWindow = window.open(game.gameUrl, "_blank"); // Open the game in a new window
+    setGameWindow(openedWindow);
+    localStartTime = Date.now(); // Set the start time for the game session
+
+    // Monitor the closing of the game window every second
     const interval = setInterval(() => {
       if (openedWindow.closed) {
-        clearInterval(interval); // Ferma l'intervallo quando la finestra è chiusa
+        clearInterval(interval); // Stop the interval when the window is closed
         setSelectedGame(game);
-
-        handleGameEnd(); // Calcola il tempo giocato
+        handleGameEnd(); // Calculate the playtime
       }
     }, 1000);
   };
 
-  const handleGameEnd = async (game) => {
+  const handleGameEnd = async () => {
     const endTime = Date.now();
 
     if (localStartTime) {
       const timePlayed = ((endTime - localStartTime) / 1000).toFixed(2);
 
-      // Controlla se selectedGame è valido
+      // Check if selectedGame is valid
       if (selectedGame) {
-        console.log("Selected Game:", selectedGame); // Log per controllare i dati
         const gameData = {
-          game: selectedGame.title, // Usa il titolo dal selectedGame
+          game: selectedGame.title, // Use the title from selectedGame
           userId: userInfo.id,
           timePlayed: parseFloat(timePlayed),
           gameEndTime: new Date().toISOString()
         };
 
         let endpoint = `${process.env.REACT_APP_API_BASE_URL}/Game/PlayedGame`;
-        console.log("Invio dati a:", endpoint);
 
         try {
           const response = await axios.post(endpoint, gameData);
           if (response.data.success) {
-            console.log("Tempo di gioco salvato con successo!");
+            openModal(
+              `Hai guadagnato ${response.data.total_points_today} punti su 100 massimi giornalieri`
+            );
           } else {
-            console.error(
-              "Errore nel salvataggio del tempo di gioco:",
-              response.data.message
+            openModal(
+              `Errore nel salvataggio del tempo di gioco: ${response.data.message}`
             );
           }
-          alert(
-            `Hai guadagnato ${response.data.total_points_today} su 100 massimi giornalieri`
-          );
         } catch (error) {
-          console.error(
-            "Errore durante la chiamata al server:",
-            error.response || error.message
-          );
+          if (error.response) {
+            openModal(`Errore: ${error.response.data.message}`);
+          } else if (error.request) {
+            openModal("Errore: Nessuna risposta dal server.");
+          } else {
+            openModal(`Errore: ${error.message}`);
+          }
         }
         setGameWindow(null);
       } else {
@@ -160,7 +167,8 @@ const GameCatalog = () => {
 
     setUserInfo(userInfo);
   };
-  // Usa useEffect per chiamare fetchUserRole quando il componente si monta
+
+  // Use useEffect to call fetchUser when the component mounts
   useEffect(() => {
     fetchUser();
   }, []);
@@ -187,14 +195,14 @@ const GameCatalog = () => {
                 <Button
                   color="primary"
                   style={{ marginTop: 10 }}
-                  onClick={() => handlePlayClick(game)} // Avvio del gioco
+                  onClick={() => handlePlayClick(game)} // Start the game
                 >
                   Play
                 </Button>
                 <Button
                   color="secondary"
                   style={{ marginTop: 10 }}
-                  onClick={() => handleOpen(game)} // Apertura dettagli
+                  onClick={() => handleOpen(game)} // Open details
                 >
                   Details
                 </Button>
@@ -212,6 +220,39 @@ const GameCatalog = () => {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Modal for displaying messages */}
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center"
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: "white",
+            padding: "20px",
+            borderRadius: "8px",
+            boxShadow: "0 3px 6px rgba(0, 0, 0, 0.3)"
+          }}
+        >
+          <Typography variant="h5" component="h2" textAlign="center">
+            {modalMessage}
+          </Typography>
+          <Button
+            onClick={() => setShowModal(false)}
+            variant="contained"
+            color="primary"
+            sx={{ marginTop: 2, color: "white" }} // Impostazione del colore del testo a bianco
+          >
+            OK
+          </Button>
+        </div>
+      </Modal>
     </>
   );
 };

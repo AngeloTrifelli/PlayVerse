@@ -1,17 +1,4 @@
-/**
-=========================================================
-* Material Dashboard 2 React - v2.2.0
-=========================================================
-
-* Product Page: https://www.creative-tim.com/product/material-dashboard-react
-* Copyright 2023 Creative Tim (https://www.creative-tim.com)
-
-Coded by www.creative-tim.com
-
- =========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-*/
+import { useEffect, useState } from "react";
 
 // react-routers components
 import { Link } from "react-router-dom";
@@ -27,9 +14,26 @@ import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
 import MDAvatar from "components/MDAvatar";
 import MDButton from "components/MDButton";
+import MDChat from "components/MDChat";
 
-function ProfilesList({ title, profiles, shadow }) {
-  const renderProfiles = profiles.map(({ image, name, description, action }) => (
+function ProfilesList({ loggedUserId, title, profiles, shadow }) {
+  const [chatTitle, setChatTitle] = useState("");
+  const [secondUserId, setSecondUserId] = useState(null);
+  const [openChat, setOpenChat] = useState(false);
+
+  const handleShowChat = (chatTitle, secondUserId) => {
+    setChatTitle(chatTitle);
+    setSecondUserId(secondUserId);
+    setOpenChat(true);
+  };
+
+  const handleCloseChat = () => {
+    setChatTitle("");
+    setSecondUserId(null);
+    setOpenChat(false);
+  }
+ 
+  const renderProfiles = profiles.map(({ image, id, name, description, action }) => (
     <MDBox key={name} component="li" display="flex" alignItems="center" py={1} mb={1}>
       <MDBox mr={2}>
         <MDAvatar src={image} alt="something here" shadow="md" />
@@ -43,22 +47,9 @@ function ProfilesList({ title, profiles, shadow }) {
         </MDTypography>
       </MDBox>
       <MDBox ml="auto">
-        {action.type === "internal" ? (
-          <MDButton component={Link} to={action.route} variant="text" color="info">
+          <MDButton onClick={() => handleShowChat(action.chatTitle, id)} variant="text" color="info">
             {action.label}
-          </MDButton>
-        ) : (
-          <MDButton
-            component="a"
-            href={action.route}
-            target="_blank"
-            rel="noreferrer"
-            variant="text"
-            color={action.color}
-          >
-            {action.label}
-          </MDButton>
-        )}
+          </MDButton>        
       </MDBox>
     </MDBox>
   ));
@@ -75,7 +66,13 @@ function ProfilesList({ title, profiles, shadow }) {
           {renderProfiles}
         </MDBox>
       </MDBox>
-    </Card>
+
+      {openChat && (
+        <MDBox style={customChatStyle}>
+          <MDChat chatTitle={chatTitle} loggedUserId={loggedUserId} secondUserId={secondUserId} closeCallback={handleCloseChat} />
+        </MDBox>
+      )}
+    </Card>    
   );
 }
 
@@ -86,9 +83,19 @@ ProfilesList.defaultProps = {
 
 // Typechecking props for the ProfilesList
 ProfilesList.propTypes = {
+  loggedUserId: PropTypes.number.isRequired,  
   title: PropTypes.string.isRequired,
   profiles: PropTypes.arrayOf(PropTypes.object).isRequired,
   shadow: PropTypes.bool,
+};
+
+const customChatStyle = {
+  position: 'fixed',
+  bottom: '60px',
+  right: '0.02vw',  
+  width: '70vh',
+  height: '400px',
+  zIndex: 1000,
 };
 
 export default ProfilesList;
