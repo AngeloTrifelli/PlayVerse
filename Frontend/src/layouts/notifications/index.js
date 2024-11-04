@@ -79,6 +79,24 @@ function Notifications() {
     }
   };
 
+  const closeNotification = async (notificationId) => {
+    let endpoint = `${process.env.REACT_APP_API_BASE_URL}/Notification/${notificationId}/seen`;
+
+    try {
+      let response = await axios.post(endpoint, {}, prepareAuthHeader());
+
+      if (response && response.status === 200) {
+        let newNotificationList = notificationList.filter((notification) => {
+          return notification.id !== notificationId;
+        });
+
+        setNotificationList(newNotificationList);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <DashboardLayout>
       <DashboardNavbar />
@@ -98,9 +116,10 @@ function Notifications() {
                   <MDAlert color="info"   
                            showButtons
                            dismissible                                                  
-                           notificationId={notification.type === 'FRIEND_REQUEST' ? notification.id : null} 
+                           notificationId={notification.id} 
                            acceptCallback={notification.type === 'FRIEND_REQUEST' ? acceptFriendRequest : null} 
-                           refuseCallback={notification.type === 'FRIEND_REQUEST' ? refuseFriendRequest : null}>
+                           refuseCallback={notification.type === 'FRIEND_REQUEST' ? refuseFriendRequest : null}
+                           closeCallback={notification.type !== 'FRIEND_REQUEST' ? closeNotification : null}>
 
                     <MDTypography variant="body2" color="white">
                       {notification.description}

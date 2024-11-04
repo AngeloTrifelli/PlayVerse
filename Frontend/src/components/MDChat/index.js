@@ -1,6 +1,7 @@
 import React, {useState, useEffect, useRef} from 'react';
 import { IoSend, IoClose } from 'react-icons/io5';
 import { prepareAuthHeader } from 'layouts/authentication/utility/auth-utility';
+import { io } from 'socket.io-client';
 import axios from 'axios';
 
 import PropTypes from 'prop-types';
@@ -30,6 +31,10 @@ function MDChat ({loggedUserId, secondUserId, chatTitle, closeCallback}) {
     }, [messageList]);
 
     useEffect(() => {
+        let socket = io(process.env.REACT_APP_API_BASE_URL, {
+            query: { userId: loggedUserId}
+        });
+
         const fetchMessages = async () => {
             let endpoint = `${process.env.REACT_APP_API_BASE_URL}/User/${loggedUserId}/messages`;
             let params = prepareAuthHeader();
@@ -46,8 +51,20 @@ function MDChat ({loggedUserId, secondUserId, chatTitle, closeCallback}) {
                 console.error(error);
             }        
         }   
+
+        socket.on('newMessage', (message) => {
+            console.log('new message received!')
+
+            if (message.receiver_id === loggedUserId) {
+                setMessageList((prevMessages) => [...prevMessages, message]);
+            }            
+        });
         
         fetchMessages();
+
+        return () => {
+            socket.disconnect();
+        }
     }, []);
 
     const handleSendMessage = async () => {

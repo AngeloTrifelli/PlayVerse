@@ -14,10 +14,13 @@ import MDAlertRoot from "components/MDAlert/MDAlertRoot";
 import MDAlertCloseIcon from "components/MDAlert/MDAlertCloseIcon";
 import pxToRem from "assets/theme/functions/pxToRem";
 
-function MDAlert({ color, dismissible, showButtons, acceptCallback, refuseCallback, notificationId, children, ...rest }) {
+function MDAlert({ color, dismissible, showButtons, acceptCallback, refuseCallback, closeCallback, notificationId, children, ...rest }) {
   const [alertStatus, setAlertStatus] = useState("mount");
 
-  const handleAlertStatus = () => setAlertStatus("fadeOut");
+  const handleAlertStatus = () => {
+    setAlertStatus("fadeOut");
+    closeCallback(notificationId);
+  }
 
   // The base template for the alert
   const alertTemplate = (mount = true) => (
@@ -26,10 +29,10 @@ function MDAlert({ color, dismissible, showButtons, acceptCallback, refuseCallba
         <MDBox display="flex" alignItems="center" color="white">
           {children}
         </MDBox>
-        {dismissible && notificationId === null ? (
+        {dismissible && closeCallback ? (
           <MDAlertCloseIcon onClick={mount ? handleAlertStatus : null}>&times;</MDAlertCloseIcon>
         ) : null}
-        {showButtons && notificationId !== null ? (
+        {showButtons && acceptCallback && refuseCallback ? (
           <MDBox>
             <MDButton color="light" variant="gradient" sx={{mr: pxToRem(10)}} onClick={() => acceptCallback(notificationId)}>Accept</MDButton>          
             <MDButton color="light" variant="gradient" onClick={() => refuseCallback(notificationId)}>Refuse</MDButton>
@@ -75,6 +78,7 @@ MDAlert.propTypes = {
   showButtons: PropTypes.bool,
   acceptCallback: PropTypes.func,
   refuseCallback: PropTypes.func,
+  closeCallback: PropTypes.func,
   notificationId: PropTypes.number,
   children: PropTypes.node.isRequired,
 };

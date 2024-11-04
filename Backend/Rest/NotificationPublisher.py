@@ -104,5 +104,27 @@ def accept_friend_request(id):
             conn.close()
 
 
+@bp.route('/Notification/<int:id>/seen', methods=['POST'])
+@jwt_required()
+def acknowledge_notification(id):
+    logging.info(f"Received a new request for Notification/seen endpoint. Notification id: {id}")
+    
+    conn = DatabaseConnection.get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:            
+        query = "UPDATE Notification SET seen = 1 WHERE id = %s"
+        cursor.execute(query, (id, ))
+
+        conn.commit()
+
+        return jsonify(success=True), 200    
+    except Error as e:
+        return create_error_response(e, 500)        
+    finally:
+        if conn:
+            conn.close()
+
+
 
 

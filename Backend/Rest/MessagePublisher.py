@@ -3,9 +3,11 @@ import time
 
 from datetime import datetime
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from mysql.connector import Error
 from Config import DatabaseConnection
+from Config.InitSocketIO import socketio
+from Config.InitSocketIO import active_users
 
 
 bp = Blueprint('MessagePublisher', __name__)
@@ -22,7 +24,7 @@ def create_error_response(errorMessage, statusCode):
 @bp.route('/Message/create', methods=['POST'])
 @jwt_required()
 def create_message():
-    logging.info("Received a new request for Notification/create endpoint")
+    logging.info("Received a new request for Message/create endpoint")
     
     conn = DatabaseConnection.get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -35,7 +37,23 @@ def create_message():
         params = (payload['sender_id'], payload['receiver_id'], 0, created_at, payload['messageText'], 0)
 
         cursor.execute(query, params)
+
+        if str(payload['receiver_id']) in active_users:            
+            socketio.emit('newMessage', {
+                'sender_id': payload['sender_id'],
+                'receiver_id': payload['receiver_id'],
+                'messageText': payload['messageText'],
+                'seen': False,
+                'sent_at': created_at
+            })        
+        else:            
+            sender_username = get_jwt_identity()
+            query = "INSERT INTO Notification (type, description, created_at, user_id, friendRequester_id, seen) VALUES (%s, %s, %s, %s, %s, %s)"
+            params = ('NEW_MESSAGE', f"You have a new message from {sender_username}", created_at, payload['receiver_id'], None, 0)
+            cursor.execute(query, params)
+    
         conn.commit()
+
 
         return jsonify(success=True), 201        
     except Error as e:

@@ -1,3 +1,4 @@
 flask_cors
 flask-jwt-extended
+flask_socketio
 mysql-connector-python
