@@ -456,17 +456,17 @@ const FAQ = () => {
                       <MDBox
                         sx={{ marginLeft: "auto", display: "flex", gap: 1 }}
                       >
-                        {role?.trim() === "ADMIN" ||
-                          (role?.trim() === "MODERATOR" && (
-                            <MDButton
-                              variant="outlined"
-                              color="info"
-                              size="small"
-                              onClick={(event) => editFAQ(event, faq)}
-                            >
-                              Edit
-                            </MDButton>
-                          ))}
+                        {(role?.trim() === "ADMIN" ||
+                          role?.trim() === "MODERATOR") && (
+                          <MDButton
+                            variant="outlined"
+                            color="info"
+                            size="small"
+                            onClick={(event) => editFAQ(event, faq)}
+                          >
+                            Edit
+                          </MDButton>
+                        )}
                         {role?.trim() === "ADMIN" && (
                           <MDButton
                             variant="outlined"
