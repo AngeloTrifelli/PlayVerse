@@ -26,11 +26,11 @@ function Profile() {
   useEffect(() => {
     const prepareFriendElem = function (elem) {
       return {
+        id: elem.id,
         description: elem.name + " " + elem.surname,
-        name: elem.username,
-        action: {
-          type: "internal",
-          route: "",
+        name: elem.username,        
+        action: {          
+          chatTitle: elem.username,
           color: "info",
           label: "view chat",
         }
@@ -93,7 +93,8 @@ function Profile() {
             </Grid>
 
             <Grid item xs={12} xl={4}>
-              <ProfilesList title="Friend List"
+              <ProfilesList loggedUserId={userInfo.id}
+                            title="Friend List"
                             profiles={friendList}
                             shadow={false}/>
             </Grid>
