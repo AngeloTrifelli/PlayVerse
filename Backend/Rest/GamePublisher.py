@@ -48,7 +48,7 @@ def insert_played_game():
         result = cursor.fetchone()
 
         total_points_today = result['total_points'] if result and result['total_points'] is not None else 0
-        print(f"Totale punti guadagnati dall'utente {user_id} oggi: {total_points_today}")
+        print(f"Totale punti guadagnati dall'utente {user_id} oggi: {earnedPoints}")
 
         max_daily_points = 100  # Limite di punti giornalieri
 

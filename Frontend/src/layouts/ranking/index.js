@@ -57,7 +57,7 @@ function UserRanking() {
     try {
       const response = await axios.get(endpoint);
       const UserData = response.data
-        .filter((user) => user.role?.trim() === "PLAYER" && !user.suspended) // Filtra solo utenti con ruolo "USER" senza spazi e non sospesi
+        .filter((user) => user.role?.trim() !== "ADMIN" && !user.suspended) // Filtra solo utenti con ruolo "PLAYER" senza spazi e non sospesi
         .map((user) => ({
           id: user.id,
           username: user.username,
@@ -74,10 +74,31 @@ function UserRanking() {
       );
     }
   };
+  const fetchCredits = async () => {
+    const currentDate = new Date().toISOString().split("T")[0]; // Ottieni la data corrente in formato "YYYY-MM-DD"
+
+    try {
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}/User/distributeWeeklyCredits`,
+        {
+          date: currentDate
+        }
+      );
+
+      console.log(response.data.message);
+      alert(response.data.message);
+    } catch (error) {
+      console.error(
+        "Errore nella distribuzione dei crediti:",
+        error.response?.data || error.message
+      );
+    }
+  };
 
   // Usa useEffect per chiamare fetchUserRole quando il componente si monta
   useEffect(() => {
     fetchUser();
+    fetchCredits();
   }, []);
 
   return (
@@ -156,7 +177,8 @@ function UserRanking() {
                         </MDTypography>
                       </MDBox>
                       <MDTypography variant="h6" color="textSecondary">
-                        Punteggio: {userInfo.points}
+                        Punteggio: {userInfo.points}{" "}
+                        {/* Assicurati che userInfo contenga i punti */}
                       </MDTypography>
                     </MDBox>
                   </Card>

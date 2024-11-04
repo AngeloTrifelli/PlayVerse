@@ -1,14 +1,14 @@
 import logging
-from datetime import datetime, timedelta, timezone, time
+from datetime import timedelta, timezone, date
 import os
-
+import datetime
+import time 
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token, jwt_required
 from mysql.connector import Error
 from hashlib import sha256
 from Config import DatabaseConnection
 from pathlib import Path
-
 
 bp = Blueprint('UserPublisher', __name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -467,6 +467,65 @@ def get_notifications(id):
         return jsonify(notification_list), 200
     except Error as e:
         return create_error_response(e, 500)
+    finally:
+        if conn:
+            conn.close()
+
+@bp.route('/User/distributeWeeklyCredits', methods=['POST'])
+def distribute_weekly_credits():
+    """Distribuisce i crediti in base alla classifica ogni settimana, il lunedì a mezzanotte."""
+    conn = DatabaseConnection.get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Data di riferimento per iniziare le settimane, es. il 04-11
+        reference_date = date(2024, 11, 4)
+        today = date.today()
+        days_since_reference = (today - reference_date).days
+        # Trova l'inizio della settimana attuale
+        start_of_week = reference_date + timedelta(days=(days_since_reference // 7) * 7)
+        end_of_week = start_of_week + timedelta(days=7)
+
+        # Controlla se oggi è la fine della settimana
+        if today != end_of_week:
+            logging.warning(f"Distribuzione crediti non avvenuta. Oggi: {today}, data di fine settimana: {end_of_week}.")
+            return jsonify({
+                "success": False, 
+                "message": "I crediti saranno distribuiti solo alla fine della settimana (lunedì a mezzanotte)."
+            }), 403
+
+        user_role = "ADMIN"
+        # Recupera i giocatori ordinati per punti della settimana
+        ranking_query = """
+            SELECT id, username, points 
+            FROM Users
+            WHERE role != %s AND suspended = 0 AND banned = 0
+            ORDER BY points DESC
+        """
+        cursor.execute(ranking_query,(user_role))
+        users = cursor.fetchall()
+
+        # Distribuisci i crediti in base alla posizione in classifica
+        for i, user in enumerate(users):
+            credits = 50 if i == 0 else 30 if i == 1 else 20 if i == 2 else 10
+            update_query = """
+                UPDATE Users 
+                SET credits = credits + %s 
+                WHERE id = %s
+            """
+            cursor.execute(update_query, (credits, user['id']))
+
+        conn.commit()
+
+        return jsonify({
+            "success": True,
+            "message": f"Crediti distribuiti con successo per la settimana che termina il {end_of_week}."
+        }), 200
+
+    except Exception as e:
+        logging.error(f"Errore nella distribuzione dei crediti settimanali: {e}")
+        return jsonify({"error": str(e)}), 500
+
     finally:
         if conn:
             conn.close()

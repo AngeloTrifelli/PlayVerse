@@ -453,18 +453,21 @@ const FAQ = () => {
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography>{faq.title}</Typography>
                       {/* Pulsanti "Modifica" e "Elimina" visibili solo se l'utente è ADMIN */}
-                      {role?.trim() === "ADMIN" && (
-                        <MDBox
-                          sx={{ marginLeft: "auto", display: "flex", gap: 1 }}
-                        >
-                          <MDButton
-                            variant="outlined"
-                            color="info"
-                            size="small"
-                            onClick={(event) => editFAQ(event, faq)}
-                          >
-                            Edit
-                          </MDButton>
+                      <MDBox
+                        sx={{ marginLeft: "auto", display: "flex", gap: 1 }}
+                      >
+                        {role?.trim() === "ADMIN" ||
+                          (role?.trim() === "MODERATOR" && (
+                            <MDButton
+                              variant="outlined"
+                              color="info"
+                              size="small"
+                              onClick={(event) => editFAQ(event, faq)}
+                            >
+                              Edit
+                            </MDButton>
+                          ))}
+                        {role?.trim() === "ADMIN" && (
                           <MDButton
                             variant="outlined"
                             color="error"
@@ -473,8 +476,8 @@ const FAQ = () => {
                           >
                             Delete
                           </MDButton>
-                        </MDBox>
-                      )}
+                        )}
+                      </MDBox>
                     </AccordionSummary>
                     <AccordionDetails>
                       <Typography>{faq.description}</Typography>
