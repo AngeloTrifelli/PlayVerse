@@ -772,12 +772,13 @@ const Shop = () => {
               top: "10px", // Sposta il box ancora più in alto
               right: "20px",
               width: "300px",
-              backgroundColor: "white", // Colore di sfondo bianco, non trasparente
+              backgroundColor: "rgba(255, 255, 255, 1)",
               border: "1px solid #ccc",
               borderRadius: "8px",
               boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
               padding: "16px",
-              zIndex: 1000
+              zIndex: 1000,
+              opacity: 1
             }}
           >
             <IconButton
