@@ -75,7 +75,7 @@ def insert_product():
         # Salva l'immagine in entrambe le cartelle
         image_file.save(backend_file_path)
 
-        logging.info(f"File saved successfully at: {backend_file_path} and {frontend_file_path}")
+        logging.info(f"File saved successfully at: {backend_file_path}")
 
         return jsonify({'success': True, 'message': 'Product added successfully!'}), 201
     except Exception as e:
@@ -209,8 +209,8 @@ def update_product():
             return create_error_response("Product not found", 404)
 
         existing_image = product['photo']  # Salva l'immagine esistente
-        image_to_save = existing_image  # Imposta di default l'immagine esistente
-
+        image_filename = existing_image  # Imposta di default l'immagine esistente
+        
         # Se è stata fornita una nuova immagine, gestiscila
         if new_image_file:
             # Percorso del file esistente

@@ -222,7 +222,8 @@ const Shop = () => {
       const response = await axios.post(endpoint, formData);
 
       if (response.status === 201) {
-        openModal("Registration successful");
+        openModal("Product inserted successfully");
+        window.location.href = "/shop"; // Reindirizza alla pagina shop
       }
     } catch (error) {
       if (error.response) {
