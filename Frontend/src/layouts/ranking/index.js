@@ -57,7 +57,7 @@ function UserRanking() {
     try {
       const response = await axios.get(endpoint);
       const UserData = response.data
-        .filter((user) => user.role?.trim() !== "ADMIN" && !user.suspended) // Filtra solo utenti con ruolo "PLAYER" senza spazi e non sospesi
+        .filter((user) => user.role?.trim() !== "ADMIN" && !user.suspended && !user.banned) // Filtra solo utenti con ruolo "USER" senza spazi e non sospesi
         .map((user) => ({
           id: user.id,
           username: user.username,

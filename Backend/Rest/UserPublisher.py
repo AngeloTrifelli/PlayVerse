@@ -498,7 +498,7 @@ def distribute_weekly_credits():
         # Recupera i giocatori ordinati per punti della settimana
         ranking_query = """
             SELECT id, username, points 
-            FROM Users
+            FROM User
             WHERE role != %s AND suspended = 0 AND banned = 0
             ORDER BY points DESC
         """
@@ -509,7 +509,7 @@ def distribute_weekly_credits():
         for i, user in enumerate(users):
             credits = 50 if i == 0 else 30 if i == 1 else 20 if i == 2 else 10
             update_query = """
-                UPDATE Users 
+                UPDATE User
                 SET credits = credits + %s 
                 WHERE id = %s
             """
@@ -526,6 +526,31 @@ def distribute_weekly_credits():
         logging.error(f"Errore nella distribuzione dei crediti settimanali: {e}")
         return jsonify({"error": str(e)}), 500
 
+    finally:
+        if conn:
+            conn.close()
+
+
+@bp.route('/User/<int:id>/messages', methods=['GET'])
+@jwt_required()
+def get_messages(id):
+    logging.info(f"Received a new request for User/messages endpoint. User id: {id}")
+
+    conn = DatabaseConnection.get_db_connection()
+    cursor = conn.cursor(dictionary=True)  
+
+    second_user_id = request.args.get('secondUserId', None)
+
+    try:
+        query = "SELECT * FROM Message WHERE (sender_id = %s AND receiver_id = %s) OR (sender_id = %s AND receiver_id = %s) ORDER BY id ASC"
+        params = (id, second_user_id, second_user_id, id)    
+        cursor.execute(query, params)
+        
+        messages = cursor.fetchall()
+
+        return jsonify(messages), 200
+    except Error as e:
+        return create_error_response(e, 500)
     finally:
         if conn:
             conn.close()
